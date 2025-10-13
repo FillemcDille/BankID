@@ -1,8 +1,10 @@
 ﻿@page "/CreateAccount"
 @inject IAccountService AccountService
+@using BlazorApp4.Services
+@inject IStorageService LokalStorageService
 
 <h3>Vänligen skapa ett konto</h3>
-<EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+<EditForm Model="_model" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div>
@@ -61,27 +63,41 @@ else
 @code {
     private CreateAccountModel _model = new();
     private List<IBankAccount> _accounts = new();
+    private const string StorageKey = "bankkonto.accounts";
 
     protected override void OnInitialized()
     {
         _accounts = AccountService.GetAccounts().ToList();
         base.OnInitialized();
     }
-    private Task CreateAccountAsync()
+    private async Task CreateAccountAsync()
     {
         try
         {
             Console.WriteLine(_model.Name);
 
-            AccountService.CreateAccount(
+            var created = AccountService.CreateAccount(
                 _model.Name,
                 _model.AccountType,
                 _model.Currency,
                 _model.InitialBalance
             );
+            _accounts.Add(created);
+            var snapshot = _accounts.Select(a => new AccountStorageDto
+            {
+                Name = a.Name,
+                AccountType = a.AccountType,
+                Currency = a.Currency,
+                Balance = a.Balance,
 
-            _accounts = AccountService.GetAccounts().ToList();
+            }).ToList();
+            await LokalStorageService.SetItemAsync(StorageKey, snapshot);
             _model.Clear();
+
+
+
+
+
         }
         catch(Exception exception)
         {
@@ -90,7 +106,7 @@ else
         }
 
 
-        return Task.CompletedTask;
+
     }
 
 
@@ -105,9 +121,18 @@ else
         public void Clear()
         {
             Name = string.Empty;
-            Currency = default;
+            Currency = Currency.None;
             InitialBalance = 0;
             AccountType = default;
         }
+
+    }
+    private class AccountStorageDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public AccountType AccountType { get; set; } = AccountType.None;
+        public Currency Currency { get; set; } = Currency.None;
+        public decimal Balance { get; set; }
+
     }
 }

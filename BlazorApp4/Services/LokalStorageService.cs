@@ -10,16 +10,16 @@ namespace BlazorApp4.Services
         private readonly IJSRuntime _jsRuntime;
         private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
-        public LokalStorageService(IJSRuntime jSRuntime)
+        public LokalStorageService(IJSRuntime jsRuntime)
         {
-            _jsRuntime = _jsRuntime;
+            _jsRuntime = jsRuntime;
         }
         
 
 
         public async Task<T?> GetItemAsync<T>(string key)
         {
-            var json = await _jsRuntime.InvokeAsync<string?>("lokalStorage.getItem", key);
+            var json = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
             if (string.IsNullOrWhiteSpace(json))
             {
                 return default;
@@ -30,7 +30,7 @@ namespace BlazorApp4.Services
         public async Task SetItemAsync<T>(string key, T value)
         {
             var json = JsonSerializer.Serialize(value, _jsonOptions);
-            await _jsRuntime.InvokeVoidAsync("lokalStorage.setItem", key, json);
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
         }
     }
 }
