@@ -14,8 +14,12 @@ namespace BlazorApp4.Services
         {
             _jsRuntime = jsRuntime;
         }
-        
 
+        public async Task SetItemAsync<T>(string key, T value)
+        {
+            var json = JsonSerializer.Serialize(value, _jsonOptions);
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
 
         public async Task<T?> GetItemAsync<T>(string key)
         {
@@ -25,12 +29,6 @@ namespace BlazorApp4.Services
                 return default;
             }
             return JsonSerializer.Deserialize<T>(json, _jsonOptions);
-        }
-
-        public async Task SetItemAsync<T>(string key, T value)
-        {
-            var json = JsonSerializer.Serialize(value, _jsonOptions);
-            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
         }
     }
 }

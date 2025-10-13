@@ -1,54 +1,55 @@
 ﻿@page "/CreateAccount"
 @inject IAccountService AccountService
 @using BlazorApp4.Services
-@inject IStorageService LokalStorageService
 
-<h3>Vänligen skapa ett konto</h3>
-<EditForm Model="_model" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
+
+<h3>Skapa nytt konto</h3>
+<EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
-    <div>
+
+    <!-- RUTA för kontonamn -->
+    <div class="mb-2">
         <label>Kontonamn</label>
-        <InputText @bind-Value="_model.Name" />
+        <InputText @bind-Value="_formModel.Name" />
     </div>
-    <div>
+    <div class="mb-2">
+        <!-- RUTA för kontotyp -->
         <label>Kontotyp</label>
-        <InputSelect @bind-Value="_model.AccountType">
+        <InputSelect @bind-Value="_formModel.Type">
             <option value="">Välj kontotyp!</option>
             <option value="@AccountType.Deposit">Baskonto</option>
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
     </div>
-    <div>
+    <!-- RUTA för valuta -->
+    <div class="mb-2">
         <label>Valuta</label>
-        <InputSelect @bind-Value="_model.Currency">
-            <option value="">Välj valuta!</option>
-            <option value="@Currency.Euro">Euro</option>
-            <option value="@Currency.SEK">SEK</option>
-            <option value="@Currency.USD">USD</option>
+        <InputSelect @bind-Value="_formModel.Currency">
+            @foreach (var currency in Enum.GetValues<Currency>())
+            {
+                <option value="@currency">@currency</option>
+            }
         </InputSelect>
-
     </div>
-    <div>
+    <!-- RUTA för Start saldo -->
+    <div class="mb-2">
         <label>Start saldo</label>
-        <InputNumber @bind-Value="_model.InitialBalance" />
+        <InputNumber @bind-Value="_formModel.InitialBalance" />
     </div>
+    <!-- Knapp för skapa -->
     <button type="submit">Skapa</button>
 </EditForm>
 
-
-
-<!--Lägg till alla konton-->
-
 <h4>Alla konton</h4>
-@if(_accounts.Count == 0)
+@if (_accounts.Count == 0)
 {
     <p>Det finns inga konton ännu, registera ditt första konto!</p>
 }
 else
 {
     <ul>
-        @foreach(var account in _accounts)
+        @foreach (var account in _accounts)
         {
             <li>
                 <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
@@ -58,81 +59,42 @@ else
     </ul>
 }
 
-
-
 @code {
-    private CreateAccountModel _model = new();
-    private List<IBankAccount> _accounts = new();
-    private const string StorageKey = "bankkonto.accounts";
-
-    protected override void OnInitialized()
+    // Form model class
+    public class CreateAccountFormModel
     {
-        _accounts = AccountService.GetAccounts().ToList();
-        base.OnInitialized();
+        public string Name { get; set; }
+        public AccountType Type { get; set; }
+        public Currency Currency { get; set; }
+        public decimal InitialBalance { get; set; }
     }
+
+    private CreateAccountFormModel _formModel = new();
+    private List<IBankAccount> _accounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _accounts = await AccountService.GetAccounts();
+    }
+
     private async Task CreateAccountAsync()
     {
         try
         {
-            Console.WriteLine(_model.Name);
-
-            var created = AccountService.CreateAccount(
-                _model.Name,
-                _model.AccountType,
-                _model.Currency,
-                _model.InitialBalance
+            var created = await AccountService.CreateAccount(
+                _formModel.Name,
+                _formModel.Type,
+                _formModel.Currency,
+                _formModel.InitialBalance
             );
-            _accounts.Add(created);
-            var snapshot = _accounts.Select(a => new AccountStorageDto
-            {
-                Name = a.Name,
-                AccountType = a.AccountType,
-                Currency = a.Currency,
-                Balance = a.Balance,
-
-            }).ToList();
-            await LokalStorageService.SetItemAsync(StorageKey, snapshot);
-            _model.Clear();
-
-
-
-
-
+            _accounts = await AccountService.GetAccounts();
+            // Reset form
+            _formModel = new CreateAccountFormModel();
+            StateHasChanged();
         }
-        catch(Exception exception)
+        catch (Exception ex)
         {
-            Console.WriteLine(exception);
-            throw;
+            Console.Error.WriteLine(ex);
         }
-
-
-
-    }
-
-
-
-    private class CreateAccountModel
-    {
-        public string Name { get; set; }
-        public AccountType AccountType { get; set; }
-        public Currency Currency { get; set; }
-        public decimal InitialBalance { get; set; }
-
-        public void Clear()
-        {
-            Name = string.Empty;
-            Currency = Currency.None;
-            InitialBalance = 0;
-            AccountType = default;
-        }
-
-    }
-    private class AccountStorageDto
-    {
-        public string Name { get; set; } = string.Empty;
-        public AccountType AccountType { get; set; } = AccountType.None;
-        public Currency Currency { get; set; } = Currency.None;
-        public decimal Balance { get; set; }
-
     }
 }
