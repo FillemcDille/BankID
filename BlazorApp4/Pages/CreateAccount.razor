@@ -1,45 +1,49 @@
 ﻿@page "/CreateAccount"
 @inject IAccountService AccountService
 @using BlazorApp4.Services
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Skapa nytt konto</h5>
+    </div>
+    <div class="card-body">
+        <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
+            <div class="mb-3">
+                <label class="form-label">Kontonamn</label>
+                <InputText class="form-control" @bind-Value="_formModel.Name" />
+            </div>
 
-<h3>Skapa nytt konto</h3>
-<EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+            <div class="mb-3">
+                <label class="form-label">Kontotyp</label>
+                <InputSelect class="form-select" @bind-Value="_formModel.Type">
+                    <option value="">Välj kontotyp!</option>
+                    <option value="@AccountType.Deposit">Baskonto</option>
+                    <option value="@AccountType.Savings">Sparkonto</option>
+                </InputSelect>
+            </div>
 
-    <!-- RUTA för kontonamn -->
-    <div class="mb-2">
-        <label>Kontonamn</label>
-        <InputText @bind-Value="_formModel.Name" />
+            <div class="mb-3">
+                <label class="form-label">Valuta</label>
+                <InputSelect class="form-select" @bind-Value="_formModel.Currency">
+                    @foreach (var currency in Enum.GetValues<Currency>())
+                    {
+                        <option value="@currency">@currency</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Startsaldo</label>
+                <InputNumber class="form-control" @bind-Value="_formModel.InitialBalance" />
+            </div>
+
+            <button type="submit" class="btn btn-success">Skapa konto</button>
+        </EditForm>
     </div>
-    <div class="mb-2">
-        <!-- RUTA för kontotyp -->
-        <label>Kontotyp</label>
-        <InputSelect @bind-Value="_formModel.Type">
-            <option value="">Välj kontotyp!</option>
-            <option value="@AccountType.Deposit">Baskonto</option>
-            <option value="@AccountType.Savings">Sparkonto</option>
-        </InputSelect>
-    </div>
-    <!-- RUTA för valuta -->
-    <div class="mb-2">
-        <label>Valuta</label>
-        <InputSelect @bind-Value="_formModel.Currency">
-            @foreach (var currency in Enum.GetValues<Currency>())
-            {
-                <option value="@currency">@currency</option>
-            }
-        </InputSelect>
-    </div>
-    <!-- RUTA för Start saldo -->
-    <div class="mb-2">
-        <label>Start saldo</label>
-        <InputNumber @bind-Value="_formModel.InitialBalance" />
-    </div>
-    <!-- Knapp för skapa -->
-    <button type="submit">Skapa</button>
-</EditForm>
+</div>
+
 
 <h4>Alla konton</h4>
 @if (_accounts.Count == 0)

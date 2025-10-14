@@ -8,6 +8,7 @@ namespace BlazorApp4.Services
         private readonly List<IBankAccount> _accounts;
         private readonly IStorageService _storageService;
         private bool isLoaded;
+        public List<Transaction> Transactions { get; set; } = new();
 
         public AccountService(IStorageService storageService)
         {
@@ -41,5 +42,44 @@ namespace BlazorApp4.Services
             await IsInitialized();
             return _accounts.Cast<IBankAccount>().ToList();
         }
+        public async Task<List<Transaction>> GetTransactionsAsync(string accountName)
+        {
+            var allTransactions = await _storageService.GetItemAsync<List<Transaction>>("Transactions") ?? new();
+            return allTransactions
+                .Where(t => t.AccountName.Equals(accountName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(t => t.Date)
+                .ToList();
+        }
+        public async Task<List<Transaction>> GetTransactionsHistoryAsync()
+        {
+            return await _storageService.GetItemAsync<List<Transaction>>("Transactions") ?? new();
+        }
+
+        private async Task LogTransaction(Transaction tx)
+        {
+            var transaction = await _storageService.GetItemAsync<List<Transaction>>("Transactions") ?? new();
+            transaction.Add(tx);
+            await _storageService.SetItemAsync("Transactions", transaction);
+        }
+        public async Task DepositAsync(Guid accountId, decimal amount)
+        {
+            await IsInitialized();
+            var account = _accounts.FirstOrDefault(a => a.Id == accountId);
+            if (account is null) throw new Exception("Konto hittades inte.");
+
+            account.Deposit(amount);
+            await SaveAsync();
+
+            await LogTransaction(new Transaction
+            {
+                AccountName = account.Name,
+                Amount = amount,
+                BalanceAfter = account.Balance,
+                Description = "Insättning",
+                Type = TransactionType.Insättning,
+                Date = DateTime.Now
+            });
+        }
     }
+
 }
