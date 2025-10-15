@@ -42,6 +42,7 @@ namespace BlazorApp4.Services
             await IsInitialized();
             return _accounts.Cast<IBankAccount>().ToList();
         }
+       
         public async Task<List<Transaction>> GetTransactionsAsync(string accountName)
         {
             var allTransactions = await _storageService.GetItemAsync<List<Transaction>>("Transactions") ?? new();
@@ -79,6 +80,17 @@ namespace BlazorApp4.Services
                 Type = TransactionType.Insättning,
                 Date = DateTime.Now
             });
+        }
+
+        public async Task RemoveAccountAynsc(Guid accountId)
+        {
+            await IsInitialized();
+            var account = _accounts.FirstOrDefault(a => a.Id == accountId);
+            if (account != null)
+            {
+                _accounts.Remove(account);
+                await SaveAsync();
+            }
         }
     }
 

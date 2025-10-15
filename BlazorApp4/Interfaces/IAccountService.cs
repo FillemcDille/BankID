@@ -9,6 +9,7 @@ namespace BlazorApp4.Interfaces
         Task<List<IBankAccount>> GetAccounts();
         Task<List<Transaction>> GetTransactionsHistoryAsync();
         Task DepositAsync(Guid accountId, decimal amount);
+        Task RemoveAccountAynsc(Guid accountId);
 
 
     }

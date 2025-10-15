@@ -58,6 +58,7 @@ else
             <li>
                 <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
                 <small>(Uppdaterad @account.LastUpdated.ToLocalTime())</small>
+                <button class="btn btn-danger btn-sm ms-2"@onclick="() => RemoveAccountAsync(account.Id)">Ta bort</button>
             </li>
         }
     </ul>
@@ -100,5 +101,11 @@ else
         {
             Console.Error.WriteLine(ex);
         }
+    }
+    private async Task  RemoveAccountAsync(Guid AccountId)
+    {
+        await AccountService.RemoveAccountAynsc(AccountId);
+        _accounts = await AccountService.GetAccounts();
+        StateHasChanged();
     }
 }
