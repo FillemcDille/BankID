@@ -53,6 +53,7 @@ namespace BlazorApp4.Domain
             if (amount <= 0) throw new ArgumentException("Amount must be positive.", nameof(amount));
             Balance += amount;
             LastUpdated = DateTime.Now;
+
         }
     }
 }
