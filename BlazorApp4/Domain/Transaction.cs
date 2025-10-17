@@ -3,8 +3,10 @@
     public enum TransactionType
     {
         Deposit,
-        Withdrawal,
-        Transfer
+        Withdraw,
+        TransferIn,
+        TransferOut
+
     }
     public class Transaction
     {
@@ -14,7 +16,7 @@
         public decimal Amount { get; set; } 
         public DateTime TimeStamp { get; set; } 
         public TransactionType TransactionType { get; set; }
-        public decimal BalanceAfterTransaction { get; set; }
+        public decimal BalanceAfter { get; set; }
 
 
     }

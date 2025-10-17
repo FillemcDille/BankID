@@ -1,0 +1,128 @@
+﻿@page "/transfer"
+@inject IAccountService AccountService
+
+<h3>Transfer</h3>
+@if(_accounts.Count < 2)
+{
+	<p> Skapa minst 2 konton för att göra en transaktion</p>
+
+}
+else
+{
+	<EditForm Model="_model" OnValidSubmit="OnSubmitAsync">
+		<DataAnnotationsValidator/>
+		<ValidationSummary/>
+		<div class="mb-2">
+			<label>Från Konto</label>
+			<InputSelect TValue="Guid"
+						 @bind-Value="_model.FromAccountId"
+						 class="form-select"
+						 @onchange="HandleFormChanged">
+						 <option value="@Guid.Empty">Välj konto..</option>
+				@foreach (var account in _accounts)
+				{
+					<option value="@account.Id">@account.Name - saldo: @account.Balance</option>
+				}
+			</InputSelect>
+		</div>
+
+
+		<div class="mb-2">
+			<label>Till konto</label>
+			<InputSelect TValue="Guid"
+						 @bind-Value="_model.ToAccountId"
+						 class="form-select"
+						 disabled="@(_model.FromAccountId == Guid.Empty)">
+				<option value="@Guid.Empty">Välj konto..</option>
+				@foreach (var account in _toAccounts)
+				{
+					<option value="@account.Id">@account.Name - saldo: @account.Balance</option>
+				}
+			</InputSelect>
+		</div>
+
+		<div class="mb-2">
+			<label>Belopp</label>
+			<InputNumber TValue="decimal"@bind-value="_model.Amount" class="form-control"></InputNumber>
+		</div>
+
+			<button type="submit" class="btn btn-primary"></button>
+
+	</EditForm>
+}
+
+	
+
+
+
+
+
+
+
+
+@code {
+	private readonly TransferFormModel _model = new();
+	private List<IBankAccount> _accounts = new();
+	private List<IBankAccount> _toAccounts = new();
+
+
+	private class TransferFormModel
+	{
+		public Guid FromAccountId { get; set; }
+		public Guid ToAccountId { get; set; }
+		public decimal Amount { get; set; }
+	}
+
+	protected override void OnInitialized()
+	{
+		_accounts = AccountService.GetAccounts().Result;
+
+		_toAccounts = _accounts;
+	}
+
+	private Task OnSubmitAsync()
+	{
+		try
+		{
+			AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
+
+			_accounts = AccountService.GetAccounts().Result;
+
+			var from = _accounts.First(x => x.Id == _model.FromAccountId);
+			var to = _accounts.First(x => x.Id == _model.ToAccountId);
+
+
+		}
+		catch(Exception exception)
+		{
+			Console.WriteLine(exception.Message);
+		}
+
+		return Task.CompletedTask; 
+	}
+	private void HandleFormChanged(ChangeEventArgs eventArgs)
+	{	
+		if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
+		{
+			OnFormChanged(id);
+		}
+
+	}
+
+
+	private void OnFormChanged(Guid fromId)
+	{
+		var from = _accounts.FirstOrDefault(x => x.Id == fromId);
+
+		if(from != null)
+		{
+			_toAccounts = _accounts.Where(account => account.Id != fromId).ToList();
+		}
+		else
+		{
+			_accounts = _accounts.ToList();
+
+			_model.ToAccountId = Guid.Empty;
+		}
+	}
+}
