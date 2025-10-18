@@ -46,7 +46,15 @@ else
 			<InputNumber TValue="decimal"@bind-value="_model.Amount" class="form-control"></InputNumber>
 		</div>
 
-			<button type="submit" class="btn btn-primary"></button>
+			<button type="submit" class="btn btn-primary">Transfer</button>
+
+			<h4>Konton</h4>
+			<ul>
+				@foreach(var account in _accounts)
+				{
+					<li>@account.Name - saldo: @account.Balance</li>
+				}
+				</ul>
 
 	</EditForm>
 }
@@ -82,6 +90,17 @@ else
 
 	private async Task OnSubmitAsync()
 	{
+		if(_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty ||_model.Amount <= 0)
+		{
+			StateHasChanged();
+			return;
+		}
+		if(_model.FromAccountId == _model.ToAccountId)
+		{
+			StateHasChanged();
+			return;
+		}
+
 		try
 		{
 			await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
@@ -124,5 +143,6 @@ else
 
 			_model.ToAccountId = Guid.Empty;
 		}
+		StateHasChanged();
 	}
 }
