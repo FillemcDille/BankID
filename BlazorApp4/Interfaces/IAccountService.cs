@@ -6,6 +6,6 @@ namespace BlazorApp4.Interfaces
         Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance);
         Task<List<IBankAccount>> GetAccounts();
 
-        void Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
+       Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
     }
 }

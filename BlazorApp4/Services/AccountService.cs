@@ -43,7 +43,7 @@ namespace BlazorApp4.Services
             return _accounts.Cast<IBankAccount>().ToList();
         }
 
-        public void Transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
+        public async Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
             var fromAccount = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == fromAccountId)
             ?? throw new KeyNotFoundException($"Account with ID {fromAccountId} not found.");
