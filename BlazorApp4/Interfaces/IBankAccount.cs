@@ -18,4 +18,6 @@ public interface IBankAccount
 
     void Withdraw(decimal amount);
     void Deposit(decimal amount);
+
+    void TransferTo(BankAccount toAccount, decimal amount);
 }

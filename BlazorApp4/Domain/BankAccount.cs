@@ -13,6 +13,7 @@ namespace BlazorApp4.Domain
         public decimal Balance { get; private set; }
         public DateTime LastUpdated { get; private set; }
 
+        private readonly List<Transaction> _transaction = new();
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
             Name = name;
@@ -55,5 +56,34 @@ namespace BlazorApp4.Domain
             LastUpdated = DateTime.Now;
 
         }
+
+        public void TransferTo(BankAccount toAccount, decimal amount)
+        {
+            //Från Vilket konto
+            Balance -= amount;
+            LastUpdated = DateTime.UtcNow;
+            _transaction.Add(new Transaction
+            {
+                TransactionType = TransactionType.TransferOut,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                ToAccountId = toAccount.Id,
+
+            });
+
+            //till vilket konto
+            toAccount.Balance += amount;
+            toAccount.LastUpdated = DateTime.UtcNow;
+            toAccount._transaction.Add(new Transaction
+            {
+                TransactionType = TransactionType.TransferIn,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                ToAccountId = toAccount.Id
+            });
+        }
+
     }
 }

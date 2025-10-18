@@ -3,19 +3,22 @@
     public enum TransactionType
     {
         Deposit,
-        Withdrawal,
-        Transfer
+        Withdraw,
+        TransferIn,
+        TransferOut
+
     }
     public class Transaction
     {
         public Guid Id { get; set; }  = Guid.NewGuid();
-        public Guid FromAccountId { get; set; } = Guid.NewGuid();
-        public Guid ToAccountId { get; set; } = Guid.NewGuid();
-        public decimal Amount { get; set; } = new decimal();
-        public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
-        public TransactionType TransactionType { get; set; } = new TransactionType();
+        public Guid? FromAccountId { get; set; }
+        public Guid? ToAccountId { get; set; }
+        public decimal Amount { get; set; } 
+        public DateTime TimeStamp { get; set; } 
+        public TransactionType TransactionType { get; set; }
+        public decimal BalanceAfter { get; set; }
 
-        
+
     }
     
 }
