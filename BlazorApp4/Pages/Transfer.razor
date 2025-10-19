@@ -21,7 +21,7 @@ else
 						 <option value="@Guid.Empty">Välj konto..</option>
 				@foreach (var account in _accounts)
 				{
-					<option value="@account.Id">@account.Name - saldo: @account.Balance</option>
+					<option value="@account.Id">@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</option>
 				}
 			</InputSelect>
 		</div>
@@ -36,7 +36,7 @@ else
 				<option value="@Guid.Empty">Välj konto..</option>
 				@foreach (var account in _toAccounts)
 				{
-					<option value="@account.Id">@account.Name - saldo: @account.Balance</option>
+					<option value="@account.Id">@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</option>
 				}
 			</InputSelect>
 		</div>
@@ -52,7 +52,7 @@ else
 			<ul>
 				@foreach(var account in _accounts)
 				{
-					<li>@account.Name - saldo: @account.Balance</li>
+					<li>@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</li>
 				}
 				</ul>
 
