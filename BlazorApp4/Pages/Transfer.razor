@@ -21,7 +21,7 @@ else
 						 <option value="@Guid.Empty">Välj konto..</option>
 				@foreach (var account in _accounts)
 				{
-					<option value="@account.Id">@account.Name - saldo: @account.Balance</option>
+					<option value="@account.Id">@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</option>
 				}
 			</InputSelect>
 		</div>
@@ -34,9 +34,9 @@ else
 						 class="form-select"
 						 disabled="@(_model.FromAccountId == Guid.Empty)">
 				<option value="@Guid.Empty">Välj konto..</option>
-				@foreach (var account in _toAccounts)
+				@foreach (var account in _toAccounts.Where(x=>x.Id != _model.FromAccountId))
 				{
-					<option value="@account.Id">@account.Name - saldo: @account.Balance</option>
+					<option value="@account.Id">@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</option>
 				}
 			</InputSelect>
 		</div>
@@ -48,11 +48,11 @@ else
 
 			<button type="submit" class="btn btn-primary">Transfer</button>
 
-			<h4>Konton</h4>
+			<h4>Transactions Historik</h4>
 			<ul>
 				@foreach(var account in _accounts)
 				{
-					<li>@account.Name - saldo: @account.Balance</li>
+					<li>@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType Tid: @account.LastUpdated</li>
 				}
 				</ul>
 
