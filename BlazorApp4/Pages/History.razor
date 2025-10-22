@@ -1,7 +1,23 @@
 ﻿@page "/History"
+@inject IAccountService AccountService
+
+@if(_transactions == null)
+{
+	
+}
+
 
 <h3>History</h3>
 
 @code {
 
+	private List<IBankAccount> _accounts = new();
+	private List<Transaction> _transactions;
+	private readonly Guid _selectedAccountId;
+
+	protected override async Task OnInitializedAsync()
+	{
+		_accounts = await AccountService.GetAccounts();
+
+	}
 }
