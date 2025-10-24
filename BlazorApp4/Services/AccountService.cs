@@ -30,16 +30,17 @@ namespace BlazorApp4.Services
 
         public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
-            await IsInitialized();
+            //await IsInitialized();
             var account = new BankAccount(name, accountType, currency, initialBalance);
             _accounts.Add(account);
             await SaveAsync();
             return account;
         }
 
-        public async Task<List<IBankAccount>> GetAccounts()
+        public List<IBankAccount> GetAccounts()
         {
-            await IsInitialized();
+            //await IsInitialized();
+            
             return _accounts.Cast<IBankAccount>().ToList();
         }
 
@@ -52,6 +53,23 @@ namespace BlazorApp4.Services
             ?? throw new KeyNotFoundException($"Account with ID {toAccountId} not found.");
 
             fromAccount .TransferTo(toAccount, amount);
+            await SaveAsync();
         }
+
+        public async Task<List<Transaction>> GetAllTransactionsAsync()
+        {
+            
+            return _accounts.SelectMany(a => a.Transactions).ToList();
+        }
+
+        public async Task EnsureLoadedAsync()
+        {
+            if (isLoaded)
+                return;
+            await IsInitialized(); // Async sen betyg blir mindre
+
+            isLoaded = true;
+        }
+
     }
 }

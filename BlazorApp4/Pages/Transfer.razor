@@ -81,10 +81,9 @@ else
 		public decimal Amount { get; set; }
 	}
 
-	protected override async Task OnInitializedAsync()
+	protected override void OnInitialized()
 	{
-		_accounts = await AccountService.GetAccounts();
-
+		_accounts = AccountService.GetAccounts();
 		_toAccounts = _accounts;
 	}
 
@@ -105,7 +104,7 @@ else
 		{
 			await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
 
-			_accounts = await  AccountService.GetAccounts();
+			_accounts = AccountService.GetAccounts();
 
 			var from = _accounts.First(x => x.Id == _model.FromAccountId);
 			var to = _accounts.First(x => x.Id == _model.ToAccountId);
