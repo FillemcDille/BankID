@@ -12,7 +12,7 @@ public interface IBankAccount
     Guid Id { get; }
     string Name { get; }
     Domain.AccountType AccountType { get; }
-    Currency Currency {  get; }
+    Currency Currency { get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
 
@@ -20,4 +20,6 @@ public interface IBankAccount
     void Deposit(decimal amount);
 
     void TransferTo(BankAccount toAccount, decimal amount);
+
+    IReadOnlyList<Transaction> Transactions { get;}
 }

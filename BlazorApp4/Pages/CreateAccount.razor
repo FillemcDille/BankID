@@ -1,4 +1,4 @@
-﻿@page "/CreateAccount"
+﻿@page "/createaccount"
 @inject IAccountService AccountService
 @using BlazorApp4.Services
 
@@ -63,7 +63,7 @@ else
     // Form model class
     public class CreateAccountFormModel
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public AccountType Type { get; set; }
         public Currency Currency { get; set; }
         public decimal InitialBalance { get; set; }
@@ -72,9 +72,9 @@ else
     private CreateAccountFormModel _formModel = new();
     private List<IBankAccount> _accounts = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        _accounts = await AccountService.GetAccounts();
+        _accounts =  AccountService.GetAccounts();
     }
 
     private async Task CreateAccountAsync()
@@ -87,7 +87,7 @@ else
                 _formModel.Currency,
                 _formModel.InitialBalance
             );
-            _accounts = await AccountService.GetAccounts();
+            _accounts = AccountService.GetAccounts();
             // Reset form
             _formModel = new CreateAccountFormModel();
             StateHasChanged();
