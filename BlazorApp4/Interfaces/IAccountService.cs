@@ -8,6 +8,6 @@ namespace BlazorApp4.Interfaces
         
         Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
         Task EnsureLoadedAsync();
-        Task<List<Transaction>> GetAllTransactionsAsync();
+       
     }
 }

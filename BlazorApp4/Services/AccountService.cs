@@ -52,15 +52,16 @@ namespace BlazorApp4.Services
             var toAccount =_accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == toAccountId)
             ?? throw new KeyNotFoundException($"Account with ID {toAccountId} not found.");
 
+            if (fromAccount.Balance < amount)
+                throw new InvalidOperationException("Otillräckliga medel på från-kontot.");
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Beloppet måste vara positivt.");
+
             fromAccount .TransferTo(toAccount, amount);
             await SaveAsync();
         }
 
-        public async Task<List<Transaction>> GetAllTransactionsAsync()
-        {
-            
-            return _accounts.SelectMany(a => a.Transactions).ToList();
-        }
+      
 
         public async Task EnsureLoadedAsync()
         {

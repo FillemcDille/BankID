@@ -21,5 +21,5 @@ public interface IBankAccount
 
     void TransferTo(BankAccount toAccount, decimal amount);
 
-    IReadOnlyList<Transaction> Transactions { get;}
+    List<Transaction> Transactions { get;}
 }

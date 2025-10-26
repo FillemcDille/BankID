@@ -76,8 +76,6 @@ else
 
 	private List<IBankAccount> _accounts = new();
 	private IBankAccount? _selectedAccount;
-	private List<Transaction> _allTransactions;
-
 	private Guid _selectedAccountId; // Vilket bank konto
 
 	//start värde för sortering
@@ -114,6 +112,7 @@ else
 				return;
 			_selectedAccountId = value;
 			_selectedAccount = _accounts.FirstOrDefault(account => account.Id == value);
+			StateHasChanged();
 		}
 	}
 
@@ -126,8 +125,6 @@ else
 	{
 		await AccountService.EnsureLoadedAsync();
 		_accounts = AccountService.GetAccounts();
-		// _transactions = await AccountService.GetAllTransactionsAsync();
-
 
 		//om det finns konto i vår lista, välj första för att visa i UI
 		if(_accounts.Count > 0)
@@ -160,6 +157,7 @@ else
 		};
 		return sortedList;
 	}
-
+	
+	
 }
 
