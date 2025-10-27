@@ -1,30 +1,32 @@
 ﻿@page "/createaccount"
 @inject IAccountService AccountService
 @using BlazorApp4.Services
+@using System.ComponentModel.DataAnnotations
 
-
-<h3>Skapa nytt konto</h3>
+<h3>Create account</h3>
 <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <!-- RUTA för kontonamn -->
+    <!-- BOX for account name -->
     <div class="mb-2">
-        <label>Kontonamn</label>
+        <label>Account name</label>
         <InputText @bind-Value="_formModel.Name" />
     </div>
+
+    <!-- BOX for account type -->
     <div class="mb-2">
-        <!-- RUTA för kontotyp -->
-        <label>Kontotyp</label>
+        <label>Account type</label>
         <InputSelect @bind-Value="_formModel.Type">
-            <option value="">Välj kontotyp!</option>
-            <option value="@AccountType.Deposit">Baskonto</option>
-            <option value="@AccountType.Savings">Sparkonto</option>
+            <option value="">Select account!</option>
+            <option value="@AccountType.Deposit">Basic account</option>
+            <option value="@AccountType.Savings">Savings account</option>
         </InputSelect>
     </div>
-    <!-- RUTA för valuta -->
+
+    <!-- BOX for currency -->
     <div class="mb-2">
-        <label>Valuta</label>
+        <label>Currency</label>
         <InputSelect @bind-Value="_formModel.Currency">
             @foreach (var currency in Enum.GetValues<Currency>())
             {
@@ -32,19 +34,21 @@
             }
         </InputSelect>
     </div>
-    <!-- RUTA för Start saldo -->
+
+    <!-- BOX for balance -->
     <div class="mb-2">
-        <label>Start saldo</label>
+        <label>Opening balance</label>
         <InputNumber @bind-Value="_formModel.InitialBalance" />
     </div>
-    <!-- Knapp för skapa -->
-    <button type="submit">Skapa</button>
+
+    <!-- Button for create -->
+    <button type="submit">Create</button>
 </EditForm>
 
-<h4>Alla konton</h4>
+<h4>All accounts</h4>
 @if (_accounts.Count == 0)
 {
-    <p>Det finns inga konton ännu, registera ditt första konto!</p>
+    <p>There are no accounts yet, register your first account!</p>
 }
 else
 {
@@ -59,10 +63,12 @@ else
     </ul>
 }
 
+<!-- Code for the deisgn -->
 @code {
     // Form model class
     public class CreateAccountFormModel
     {
+        [Required(ErrorMessage = "Account name is mandatory")]
         public string Name { get; set; } = string.Empty;
         public AccountType Type { get; set; }
         public Currency Currency { get; set; }

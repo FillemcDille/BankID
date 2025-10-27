@@ -4,49 +4,45 @@
 
 @if(_accounts == null)
 {
-	<p>Inga konto ännu! </p>
+	<p>No accounts yet! </p>
 }
 else
 {
 	<div class="mb-2">
-		<label>Välj Konto!</label>
+		<label>Select account!</label>
 		<InputSelect TValue="Guid"
 					 class="form-select"
 					 id="accountSelect"
 					 @bind-Value="SelectedAccountId">
 			@foreach(var account in _accounts)
 			{
-				<option value="@account.Id">@account.Name - Saldo: @account.Balance</option>
+				<option value="@account.Id">@account.Name - Balance: @account.Balance</option>
 			}
 		</InputSelect>
 	</div>
 
 	<div class="mb-2">
 		<button class="btn btn-sm" @onclick="() => SetSort(SortKey.Date)">
-			sortera: Datum @(currentKey == SortKey.Date ? (descending ? "upp" : "ned") : "")
+			Sort: Date @(currentKey == SortKey.Date ? (descending ? "up" : "down") : "")
 		</button>
 		<button class="btn btn-sm" @onclick="() => SetSort(SortKey.Amount)">
-			sortera: Belopp @(currentKey == SortKey.Amount ? (descending ? "upp" : "ned") : "")
+			Sort: Amount @(currentKey == SortKey.Amount ? (descending ? "up" : "down") : "")
 		</button>
 	</div>
 	@if (_selectedAccount == null)
 	{
-		<p>Inga Transation ännu!</p>
+		<p>No transaction yet!</p>
 	}
-	@* else if(_selectedAccount.Transactions?.Any() ?? false)
-	{
-		<p> inga transaktioner</p>
-	} *@
 	else
 	{
 		<table class="table table-sm">
 			<thead>
 				<tr>
-					<th>Datum</th>
-					<th>Belopp</th>
-					<th>Transaktionstyp</th>
-					<th>Saldo efter</th>
-					<th>Från -> Till</th>
+					<th>Date</th>
+					<th>Amount</th>
+					<th>Transaction type</th>
+					<th>Balance after</th>
+					<th>From -> To</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -60,7 +56,7 @@ else
 							@if(transaction.FromAccountId.HasValue || transaction.ToAccountId.HasValue)
 							{
 
-								<span>@(transaction.FromAccountId.ToString()[..6]) -> @(transaction.ToAccountId.ToString()[..6])</span>
+								<span>@(transaction.FromAccountId.ToString()?[..6]) -> @(transaction.ToAccountId.ToString()?[..6])</span>
 							}
 					    </td>
 					</tr>
@@ -73,17 +69,16 @@ else
 
 
 @code {
-
+	//Instance Variable
 	private List<IBankAccount> _accounts = new();
 	private IBankAccount? _selectedAccount;
-	private Guid _selectedAccountId; // Vilket bank konto
+	private Guid _selectedAccountId;
 
-	//start värde för sortering
+	//Start value for sorting
 	private SortKey currentKey = SortKey.Date;
 	private bool descending = true;
 
-
-
+	//Enum for SortKey
 	private enum SortKey
 	{
 		Date,
@@ -126,7 +121,7 @@ else
 		await AccountService.EnsureLoadedAsync();
 		_accounts = AccountService.GetAccounts();
 
-		//om det finns konto i vår lista, välj första för att visa i UI
+		//If there is an account in our list, select the first one to display in the UI
 		if(_accounts.Count > 0)
 		{
 			_selectedAccountId = _accounts[0].Id;
@@ -141,7 +136,7 @@ else
 		if (_selectedAccount == null)
 			return Enumerable.Empty<Transaction>();
 
-		//sortera lista, datum belopp
+		//sort list, date amount
 
 		var sortedList = _selectedAccount.Transactions.AsEnumerable();
 		sortedList = currentKey switch

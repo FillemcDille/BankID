@@ -1,7 +1,4 @@
-﻿
-
-using System.Text.Json.Serialization;
-
+﻿using System.Text.Json.Serialization;
 namespace BlazorApp4.Domain
 {
     /// <summary>
@@ -15,17 +12,17 @@ namespace BlazorApp4.Domain
     /// synchronized externally if used in multi-threaded scenarios.</remarks>
     public class BankAccount : IBankAccount
     {
+        //Constants
         public Guid Id { get; private set; } = Guid.NewGuid();
         public string Name { get; private set; }
         public AccountType AccountType { get; private set; }
         public Currency Currency { get; private set; }
         public decimal Balance { get; private set; }
         public DateTime LastUpdated { get; private set; }
-
         public List<Transaction> Transactions => _transaction;
-
         private readonly List<Transaction> _transaction = new();
 
+        // Constructor
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
             Name = name;
@@ -93,7 +90,6 @@ namespace BlazorApp4.Domain
 
         }
 
-
         /// <summary>
         /// Transfers the specified amount from this account to another bank account.
         /// </summary>
@@ -131,7 +127,6 @@ namespace BlazorApp4.Domain
                 ToAccountId = toAccount.Id,
                 TimeStamp = DateTime.UtcNow
             });
-
         }
     }
 }
