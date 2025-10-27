@@ -1,7 +1,48 @@
 ﻿@page "/"
+<h1>Bank App</h1>
+
+@if (isLocked)
+{
+	<div class="lock-screen">
+		<input type="password" @bind="enterPin" placeholder="Ange Pin"/>
+		<button  @onclick="TryUnlock">Unlock</button>
+		@if (pinError)
+		{
+			<p>class"error">Fel PIN!</p>
+		}
+	</div>
+}
+else
+{
+	<div class"main-content">
+
+	</div>
+}
+
+
+
+
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+
+@code{
+	private bool isLocked = true;
+	private string enterPin = "";
+	private bool pinError = false;
+	private const string correctPin = "1234";
+
+	private void TryUnlock()
+	{
+		if(enterPin == correctPin)
+		{
+			isLocked = false;
+			pinError = false;
+		}
+		else
+		{
+			pinError = false;
+		}
+	}
+}

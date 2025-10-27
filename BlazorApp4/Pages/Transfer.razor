@@ -13,6 +13,7 @@ else
 	<EditForm Model="_model" OnValidSubmit="OnSubmitAsync">
 		<DataAnnotationsValidator/>
 		<ValidationSummary/>
+		
 		<div class="mb-2">
 			<label>From account</label>
 			<InputSelect TValue="Guid"
@@ -55,7 +56,7 @@ else
 				{
 					<li>@account.Name - Balance: @account.Balance @account.Currency Account type: @account.AccountType Time: @account.LastUpdated</li>
 				}
-				</ul>
+			</ul>
 
 	</EditForm>
 	@if (!string.IsNullOrEmpty(_errorMessage))

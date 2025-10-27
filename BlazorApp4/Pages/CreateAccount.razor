@@ -3,6 +3,7 @@
 @using BlazorApp4.Services
 @using System.ComponentModel.DataAnnotations
 
+<!--Create account form-->
 <h3>Create account</h3>
 <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
@@ -45,6 +46,7 @@
     <button type="submit">Create</button>
 </EditForm>
 
+<!--List of all accounts-->
 <h4>All accounts</h4>
 @if (_accounts.Count == 0)
 {
@@ -75,14 +77,22 @@ else
         public decimal InitialBalance { get; set; }
     }
 
+    //Private field for models
     private CreateAccountFormModel _formModel = new();
+
+    //Private List for IBankAccount
     private List<IBankAccount> _accounts = new();
 
+    //Runs when the component loads – fetches all accounts
     protected override void OnInitialized()
     {
         _accounts =  AccountService.GetAccounts();
     }
 
+    /// <summary>
+    /// Method that runs when the form is valid and submitted
+    /// </summary>
+    /// <returns></returns>
     private async Task CreateAccountAsync()
     {
         try
