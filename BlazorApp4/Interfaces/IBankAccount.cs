@@ -6,7 +6,6 @@
 
 
 
-
 public interface IBankAccount
 {
     Guid Id { get; }
@@ -15,10 +14,9 @@ public interface IBankAccount
     Currency Currency { get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
-
+    
     void Withdraw(decimal amount);
     void Deposit(decimal amount);
-
     void TransferTo(BankAccount toAccount, decimal amount);
 
     List<Transaction> Transactions { get;}

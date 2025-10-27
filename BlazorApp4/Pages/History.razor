@@ -16,7 +16,7 @@ else
 					 @bind-Value="SelectedAccountId">
 			@foreach(var account in _accounts)
 			{
-				<option value="@account.Id">@account.Name - Balance: @account.Balance</option>
+				<option value="@account.Id">@account.Name - Balance: @($"{account.Balance:N2} SEK")</option>
 			}
 		</InputSelect>
 	</div>
@@ -49,9 +49,9 @@ else
 				@foreach(var transaction in sortTransaction())
 				{	<tr>
 						<td>@transaction.TimeStamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-							<td>@transaction.Amount</td>
+							<td>@($"{transaction.Amount:N2} SEK")</td>
 							<td>@transaction.TransactionType</td>
-							<td>@transaction.BalanceAfter</td>
+							<td>@($"{transaction.BalanceAfter:N2} SEK")</td>
 							<td>
 							@if(transaction.FromAccountId.HasValue || transaction.ToAccountId.HasValue)
 							{
