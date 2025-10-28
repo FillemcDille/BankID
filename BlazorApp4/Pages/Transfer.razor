@@ -1,15 +1,14 @@
 ﻿@page "/transfer"
-@using System.ComponentModel.DataAnnotations
 @inject IAccountService AccountService
 
 <h3>Transfer</h3>
-@if(_accounts.Count < 2)
+@if (_accounts.Count < 2)
 {
-	<p>Create at least 2 accounts to make a transaction</p>
-
+    <p>Create at least 2 accounts to make a transaction</p>
 }
 else
 {
+    <!-- Transfer-->
     <EditForm Model="_transferModel" OnValidSubmit="OnTransferAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -38,11 +37,16 @@ else
 
         <div class="mb-2">
             <label>Amount</label>
-            <InputNumber TValue="decimal" @bind-Value="_transferModel.Amount" class="form-control"></InputNumber>
+            <InputNumber TValue="decimal?" @bind-Value="_transferModel.Amount" class="form-control" />
         </div>
 
         <button type="submit" class="btn btn-primary">Transfer</button>
     </EditForm>
+
+    @if (!string.IsNullOrEmpty(_transferError))
+    {
+        <div class="alert alert-danger mt-3">@_transferError</div>
+    }
 
     <hr />
 
@@ -66,12 +70,15 @@ else
 
         <div class="mb-2">
             <label>Amount</label>
-            <InputNumber TValue="decimal" @bind-Value="_withdrawModel.Amount" class="form-control" />
+            <InputNumber TValue="decimal?" @bind-Value="_withdrawModel.Amount" class="form-control" />
         </div>
 
         <button type="submit" class="btn btn-primary">Withdraw</button>
     </EditForm>
-
+    @if (!string.IsNullOrEmpty(_withdrawError))
+    {
+        <div class="alert alert-danger mt-3">@_withdrawError</div>
+    }
     <hr />
 
     <!-- DEPOSIT -->
@@ -94,15 +101,15 @@ else
 
         <div class="mb-2">
             <label>Amount</label>
-            <InputNumber TValue="decimal" @bind-Value="_depositModel.Amount" class="form-control" />
+            <InputNumber TValue="decimal?" @bind-Value="_depositModel.Amount" class="form-control" />
         </div>
 
         <button type="submit" class="btn btn-primary">Deposit</button>
     </EditForm>
 
-    @if (!string.IsNullOrEmpty(_errorMessage))
+    @if (!string.IsNullOrEmpty(_depositError))
     {
-        <div class="alert alert-danger mt-3">@_errorMessage</div>
+        <div class="alert alert-danger mt-3">@_depositError</div>
     }
 
     <h4 class="mt-4">Transaction Overview</h4>
@@ -110,8 +117,7 @@ else
         @foreach (var account in _accounts)
         {
             <li>
-                @account.Name — Balance: @account.Balance @account.Currency
-                — Updated: @account.LastUpdated
+                @account.Name — Balance: @account.Balance @account.Currency — Updated: @account.LastUpdated
             </li>
         }
     </ul>
@@ -124,126 +130,105 @@ else
 
     private List<IBankAccount> _accounts = new();
     private List<IBankAccount> _toAccounts = new();
-    private string _errorMessage = string.Empty;
 
-    //Models
+    private string _withdrawError = string.Empty;
+    private string _transferError = string.Empty;
+    private string _depositError = string.Empty;
+
+
+    // Models med nullable Amount
     private class TransferFormModel
     {
         public Guid FromAccountId { get; set; }
         public Guid ToAccountId { get; set; }
-
-        [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
-        public decimal Amount { get; set; }
+        public decimal? Amount { get; set; }
     }
 
     private class WithdrawFormModel
     {
-        [Required]
         public Guid AccountId { get; set; }
-
-        [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
-        public decimal Amount { get; set; }
+        public decimal? Amount { get; set; }
     }
 
     private class DepositFormModel
     {
-        [Required]
         public Guid AccountId { get; set; }
-
-        [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
-        public decimal Amount { get; set; }
+        public decimal? Amount { get; set; }
     }
 
-    //Init
+    // Init
     protected override void OnInitialized()
     {
         _accounts = AccountService.GetAccounts();
         _toAccounts = _accounts;
     }
 
-    //Transfer
+    // Transfer
     private async Task OnTransferAsync()
     {
-        _errorMessage = string.Empty;
+        _withdrawError = _depositError = string.Empty;
+        _transferError = string.Empty;
 
-        try
+        var amount = _transferModel.Amount ?? 0;
+        if (_transferModel.FromAccountId == Guid.Empty ||
+            _transferModel.ToAccountId == Guid.Empty ||
+            amount <= 0)
+            return;
+
+        if (_transferModel.FromAccountId == _transferModel.ToAccountId)
         {
-            if (_transferModel.FromAccountId == Guid.Empty ||
-                _transferModel.ToAccountId == Guid.Empty ||
-                _transferModel.Amount <= 0)
-                return;
-
-            if (_transferModel.FromAccountId == _transferModel.ToAccountId)
-            {
-                _errorMessage = "Cannot transfer to the same account.";
-                return;
-            }
-
-            var fromAccount = _accounts.FirstOrDefault(x => x.Id == _transferModel.FromAccountId);
-            if (_transferModel.Amount > fromAccount?.Balance)
-            {
-                _errorMessage = "Insufficient funds.";
-                return;
-            }
-
-            await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, _transferModel.Amount);
-            _accounts = AccountService.GetAccounts();
+            _transferError = "Cannot transfer to the same account.";
+            return;
         }
-        catch (Exception ex)
+
+        var fromAccount = _accounts.FirstOrDefault(x => x.Id == _transferModel.FromAccountId);
+        if (amount > fromAccount?.Balance)
         {
-            _errorMessage = $"Error during transfer: {ex.Message}";
+            _transferError = "Insufficient funds.";
+            return;
         }
+
+        await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
+        _accounts = AccountService.GetAccounts();
     }
 
-    //Withdraw
+    // Withdraw
     private async Task OnWithdrawAsync()
     {
-        _errorMessage = string.Empty;
+        _transferError = _depositError = string.Empty;
+        _withdrawError = string.Empty;
+        var amount = _withdrawModel.Amount ?? 0;
 
-        try
+        if (_withdrawModel.AccountId == Guid.Empty || amount <= 0)
+            return;
+
+        var account = _accounts.FirstOrDefault(x => x.Id == _withdrawModel.AccountId);
+        if (amount > account?.Balance)
         {
-            if (_withdrawModel.AccountId == Guid.Empty || _withdrawModel.Amount <= 0)
-                return;
-
-            var account = _accounts.FirstOrDefault(x => x.Id == _withdrawModel.AccountId);
-            if (_withdrawModel.Amount > account?.Balance)
-            {
-                _errorMessage = "Not enough balance for withdrawal.";
-                return;
-            }
-
-            await AccountService.WidrawAsync(_withdrawModel.AccountId, _withdrawModel.Amount);
-            _accounts = AccountService.GetAccounts();
+            _withdrawError = "Not enough balance for withdrawal.";
+            return;
         }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Error during withdrawal: {ex.Message}";
-        }
+
+        await AccountService.WidrawAsync(_withdrawModel.AccountId, amount);
+        _accounts = AccountService.GetAccounts();
     }
 
-    //Deposit
+    // Deposit
     private async Task OnDepositAsync()
     {
-        _errorMessage = string.Empty;
+        _withdrawError = _transferError = string.Empty;
+        _depositError = string.Empty;
 
-        try
-        {
-            if (_depositModel.AccountId == Guid.Empty || _depositModel.Amount <= 0)
-                return;
+        var amount = _depositModel.Amount ?? 0;
 
-            await AccountService.DepositAsync(_depositModel.AccountId, _depositModel.Amount);
-            _accounts = AccountService.GetAccounts();
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Error during deposit: {ex.Message}";
-        }
+        if (_depositModel.AccountId == Guid.Empty || amount <= 0)
+            return;
+
+        await AccountService.DepositAsync(_depositModel.AccountId, amount);
+        _accounts = AccountService.GetAccounts();
     }
 
-    //Form Logic
+    // Form logic
     private void HandleFormChanged(ChangeEventArgs eventArgs)
     {
         if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
@@ -253,11 +238,7 @@ else
     private void OnFormChanged(Guid fromId)
     {
         var from = _accounts.FirstOrDefault(x => x.Id == fromId);
-        if (from != null)
-            _toAccounts = _accounts.Where(a => a.Id != fromId).ToList();
-        else
-            _toAccounts = _accounts;
-
+        _toAccounts = from != null ? _accounts.Where(a => a.Id != fromId).ToList() : _accounts;
         StateHasChanged();
     }
 }
