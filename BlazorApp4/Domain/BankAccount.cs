@@ -75,6 +75,15 @@ namespace BlazorApp4.Domain
             if (amount > Balance) throw new InvalidOperationException("Insufficient funds.");
             Balance -= amount;
             LastUpdated = DateTime.UtcNow;
+
+            _transaction.Add(new Transaction
+            {
+                TransactionType = TransactionType.Withdraw,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                TimeStamp = DateTime.UtcNow
+            });
         }
 
         /// <summary>
@@ -87,6 +96,14 @@ namespace BlazorApp4.Domain
             if (amount <= 0) throw new ArgumentException("Amount must be positive.", nameof(amount));
             Balance += amount;
             LastUpdated = DateTime.UtcNow;
+            _transaction.Add(new Transaction
+            {
+                TransactionType = TransactionType.Deposit,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                TimeStamp = DateTime.UtcNow
+            });
 
         }
 

@@ -55,8 +55,15 @@ else
 							<td>
 							@if(transaction.FromAccountId.HasValue || transaction.ToAccountId.HasValue)
 							{
-
-								<span>@(transaction.FromAccountId.ToString()?[..6]) -> @(transaction.ToAccountId.ToString()?[..6])</span>
+								<span>
+									@((transaction.FromAccountId?.ToString() is string from && from.Length >= 6
+										? from.Substring(0, 6) : "None"))
+														
+									->
+									@((transaction.ToAccountId?.ToString() is string to && to.Length >= 6
+										? to.Substring(0, 6) : "None"))
+														
+								</span>
 							}
 					    </td>
 					</tr>
