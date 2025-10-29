@@ -1,25 +1,20 @@
 ﻿namespace BlazorApp4.Services
 {
-    /// <summary>
-    /// Provides functionality for managing bank accounts, including creation, transfers, deposits,
-    /// and withdrawals. Handles persistence of account data through an injected <see cref="IStorageService"/>.
-    /// </summary>
     public class AccountService : IAccountService
     {
         private const string StorageKey = "bankapp.accounts";
         private readonly List<IBankAccount> _accounts;
         private readonly IStorageService _storageService;
+        private readonly ILogger<AccountService> _logger;
         private bool isLoaded;
 
-        public AccountService(IStorageService storageService)
+        public AccountService(IStorageService storageService, ILogger<AccountService> logger)
         {
             _storageService = storageService;
+            _logger = logger;
             _accounts = new List<IBankAccount>();
         }
 
-        /// <summary>
-        /// Ensures account data is loaded from persistent storage if not already initialized.
-        /// </summary>
         private async Task IsInitialized()
         {
             if (isLoaded) return;
@@ -28,49 +23,40 @@
             _accounts.Clear();
 
             if (fromStorage is { Count: > 0 })
+            {
                 _accounts.AddRange(fromStorage);
+                _logger.LogInformation("Loaded {Count} accounts from storage.", fromStorage.Count);
+            }
+            else
+            {
+                _logger.LogInformation("No accounts found in storage.");
+            }
 
             isLoaded = true;
         }
 
-        /// <summary>
-        /// Persists all account data asynchronously to storage.
-        /// </summary>
-        private Task SaveAsync() => _storageService.SetItemAsync(StorageKey, _accounts);
+        private Task SaveAsync()
+        {
+            _logger.LogInformation("Saving {Count} accounts to storage.", _accounts.Count);
+            return _storageService.SetItemAsync(StorageKey, _accounts);
+        }
 
-        /// <summary>
-        /// Creates a new bank account and saves it to storage.
-        /// </summary>
-        /// <param name="name">The name of the account.</param>
-        /// <param name="accountType">The type of the account (e.g., Deposit, Savings).</param>
-        /// <param name="currency">The account currency.</param>
-        /// <param name="initialBalance">The opening balance; must be non-negative.</param>
-        /// <returns>The newly created account.</returns>
         public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
+            await IsInitialized();
             var account = new BankAccount(name, accountType, currency, initialBalance);
             _accounts.Add(account);
+            _logger.LogInformation("Created account {Name} ({Id}) with balance {Balance} {Currency}.", name, account.Id, initialBalance, currency);
             await SaveAsync();
             return account;
         }
 
-        /// <summary>
-        /// Retrieves all stored accounts.
-        /// </summary>
-        /// <returns>A list of all <see cref="IBankAccount"/> instances.</returns>
-        public List<IBankAccount> GetAccounts() =>
-            _accounts.Cast<IBankAccount>().ToList();
+        public List<IBankAccount> GetAccounts() => _accounts.Cast<IBankAccount>().ToList();
 
-        /// <summary>
-        /// Transfers money between two accounts asynchronously.
-        /// </summary>
-        /// <param name="fromAccountId">The source account ID.</param>
-        /// <param name="toAccountId">The destination account ID.</param>
-        /// <param name="amount">The transfer amount.</param>
-        /// <exception cref="KeyNotFoundException">If one or both accounts are not found.</exception>
-        /// <exception cref="InvalidOperationException">If insufficient funds are available.</exception>
         public async Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
+            await IsInitialized();
+
             var fromAccount = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == fromAccountId)
                 ?? throw new KeyNotFoundException($"Account with ID {fromAccountId} not found.");
 
@@ -78,48 +64,40 @@
                 ?? throw new KeyNotFoundException($"Account with ID {toAccountId} not found.");
 
             fromAccount.TransferTo(toAccount, amount);
+            _logger.LogInformation("Transfer {Amount} from {From} to {To}. New balances: from={FromBal}, to={ToBal}.",
+                amount, fromAccountId, toAccountId, fromAccount.Balance, toAccount.Balance);
+
             await SaveAsync();
         }
 
-        /// <summary>
-        /// Ensures all account data is loaded from storage if not already available.
-        /// </summary>
         public async Task EnsureLoadedAsync()
         {
-            if (isLoaded)
-                return;
-
+            if (isLoaded) return;
             await IsInitialized();
             isLoaded = true;
         }
 
-        /// <summary>
-        /// Withdraws a specified amount from an account.
-        /// </summary>
-        /// <param name="accountId">The account ID.</param>
-        /// <param name="amount">The withdrawal amount.</param>
-        /// <exception cref="KeyNotFoundException">If the account is not found.</exception>
         public async Task WidrawAsync(Guid accountId, decimal amount)
         {
+            await IsInitialized();
+
             var account = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == accountId)
                 ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
 
             account.Withdraw(amount);
+            _logger.LogInformation("Withdraw {Amount} from {Account}. New balance {Balance}.", amount, accountId, account.Balance);
             await SaveAsync();
         }
 
-        /// <summary>
-        /// Deposits a specified amount into an account.
-        /// </summary>
-        /// <param name="accountId">The account ID.</param>
-        /// <param name="amount">The deposit amount.</param>
-        /// <exception cref="KeyNotFoundException">If the account is not found.</exception>
         public async Task DepositAsync(Guid accountId, decimal amount)
         {
+            await IsInitialized();
+
             var account = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == accountId)
                 ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
 
             account.Deposit(amount);
+            _logger.LogInformation("Deposit {Amount} to {Account}. New balance {Balance}.", amount, accountId, account.Balance);
             await SaveAsync();
         }
     }

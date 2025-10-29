@@ -7,6 +7,7 @@ public enum AccountType
     Savings,
     Deposit
 }
+
 /// <summary>
 /// Enum for currency value
 /// </summary>

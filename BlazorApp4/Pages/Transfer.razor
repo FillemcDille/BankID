@@ -1,6 +1,6 @@
 ﻿@page "/transfer"
 @inject IAccountService AccountService
-
+@inject ILogger<Transfer> Logger
 <!--Transfer page header-->
 <h3>Transfer</h3>
 
@@ -30,7 +30,12 @@ else
         <!-- Select destination account -->
         <div class="mb-2">
             <label>To account</label>
-            <InputSelect TValue="Guid" @bind-Value="_transferModel.ToAccountId" class="form-select" disabled="@(_transferModel.FromAccountId == Guid.Empty)">
+            <!-- @key forces the select to re-render when from changes -->
+            <InputSelect @key="_transferModel.FromAccountId"
+                TValue="Guid"
+                @bind-Value="_transferModel.ToAccountId"
+                class="form-select" 
+                disabled="@(_transferModel.FromAccountId == Guid.Empty)">
                 <option value="@Guid.Empty">Select account...</option>
                 @foreach (var account in _toAccounts.Where(x => x.Id != _transferModel.FromAccountId))
                 {
@@ -200,17 +205,23 @@ else
         _withdrawError = _depositError = _transferError = string.Empty;
 
         var amount = _transferModel.Amount ?? 0;
+        Logger.LogInformation("Transfer submit clicked. From={from} To={To} Amount={Amount}",
+        _transferModel.FromAccountId, _transferModel.ToAccountId, amount);
+
 
         // Validate basic input
         if (_transferModel.FromAccountId == Guid.Empty ||
-            _transferModel.ToAccountId == Guid.Empty ||
-            amount <= 0)
+            _transferModel.ToAccountId == Guid.Empty || amount <= 0)
+        {
+            Logger.LogWarning("Invalid transfer input.");
             return;
+        }
 
         // Prevent transfer to the same account
         if (_transferModel.FromAccountId == _transferModel.ToAccountId)
         {
             _transferError = "Cannot transfer to the same account.";
+            Logger.LogWarning("Transfer blocked: same account selected");
             return;
         }
 
@@ -219,11 +230,20 @@ else
         if (amount > fromAccount?.Balance)
         {
             _transferError = "Insufficient funds.";
+            Logger.LogWarning("Insufficient funds. Available={Balance} Tried={Amount}", fromAccount?.Balance, amount);
             return;
         }
-
+        try
+        {
+            await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
+            Logger.LogInformation("Transfer completed.");
+        }catch(Exception exception)
+        {
+            _transferError = exception.Message;
+            Logger.LogError(exception, "Transfer failed.");
+        }
         // Execute transfer
-        await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
+        
     }
 
     // -----------------------------
