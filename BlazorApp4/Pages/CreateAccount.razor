@@ -1,6 +1,6 @@
 ﻿@page "/createaccount"
 @inject IAccountService AccountService
-@using BlazorApp4.Services
+@* @using BlazorApp4.Services *@
 @using System.ComponentModel.DataAnnotations
 
 <!--Create account form-->
@@ -65,7 +65,7 @@ else
     </ul>
 }
 
-<!-- Code for the deisgn -->
+<!--Code for the deisgn -->
 @code {
     // Form model class
     public class CreateAccountFormModel
@@ -74,6 +74,7 @@ else
         public string Name { get; set; } = string.Empty;
         public AccountType Type { get; set; }
         public Currency Currency { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Opening balance cannot be negative.")]
         public decimal InitialBalance { get; set; }
     }
 

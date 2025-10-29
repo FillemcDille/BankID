@@ -1,18 +1,21 @@
 ﻿@page "/transfer"
 @inject IAccountService AccountService
 
+<!--Transfer page header-->
 <h3>Transfer</h3>
+
 @if (_accounts.Count < 2)
 {
     <p>Create at least 2 accounts to make a transaction</p>
 }
 else
 {
-    <!-- Transfer-->
+    <!-- ===================== TRANSFER SECTION ===================== -->
     <EditForm Model="_transferModel" OnValidSubmit="OnTransferAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- Select source account -->
         <div class="mb-2">
             <label>From account</label>
             <InputSelect TValue="Guid" @bind-Value="_transferModel.FromAccountId" class="form-select" @onchange="HandleFormChanged">
@@ -24,6 +27,7 @@ else
             </InputSelect>
         </div>
 
+        <!-- Select destination account -->
         <div class="mb-2">
             <label>To account</label>
             <InputSelect TValue="Guid" @bind-Value="_transferModel.ToAccountId" class="form-select" disabled="@(_transferModel.FromAccountId == Guid.Empty)">
@@ -35,14 +39,17 @@ else
             </InputSelect>
         </div>
 
+        <!-- Transfer amount -->
         <div class="mb-2">
             <label>Amount</label>
             <InputNumber TValue="decimal?" @bind-Value="_transferModel.Amount" class="form-control" />
         </div>
 
+        <!-- Transfer button -->
         <button type="submit" class="btn btn-primary">Transfer</button>
     </EditForm>
 
+    <!-- Display error if transfer fails -->
     @if (!string.IsNullOrEmpty(_transferError))
     {
         <div class="alert alert-danger mt-3">@_transferError</div>
@@ -50,13 +57,14 @@ else
 
     <hr />
 
-    <!-- WITHDRAW -->
+    <!-- ===================== WITHDRAW SECTION ===================== -->
     <EditForm Model="_withdrawModel" OnValidSubmit="OnWithdrawAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
         <h4>Withdraw</h4>
 
+        <!-- Select account -->
         <div class="mb-2">
             <label>Account</label>
             <InputSelect TValue="Guid" @bind-Value="_withdrawModel.AccountId" class="form-select">
@@ -68,26 +76,32 @@ else
             </InputSelect>
         </div>
 
+        <!-- Withdraw amount -->
         <div class="mb-2">
             <label>Amount</label>
             <InputNumber TValue="decimal?" @bind-Value="_withdrawModel.Amount" class="form-control" />
         </div>
 
+        <!-- Withdraw button -->
         <button type="submit" class="btn btn-primary">Withdraw</button>
     </EditForm>
+
+    <!-- Display error if withdraw fails -->
     @if (!string.IsNullOrEmpty(_withdrawError))
     {
         <div class="alert alert-danger mt-3">@_withdrawError</div>
     }
+
     <hr />
 
-    <!-- DEPOSIT -->
+    <!-- ===================== DEPOSIT SECTION ===================== -->
     <EditForm Model="_depositModel" OnValidSubmit="OnDepositAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
         <h4>Deposit</h4>
 
+        <!-- Select account -->
         <div class="mb-2">
             <label>Account</label>
             <InputSelect TValue="Guid" @bind-Value="_depositModel.AccountId" class="form-select">
@@ -99,19 +113,23 @@ else
             </InputSelect>
         </div>
 
+        <!-- Deposit amount -->
         <div class="mb-2">
             <label>Amount</label>
             <InputNumber TValue="decimal?" @bind-Value="_depositModel.Amount" class="form-control" />
         </div>
 
+        <!-- Deposit button -->
         <button type="submit" class="btn btn-primary">Deposit</button>
     </EditForm>
 
+    <!-- Display error if deposit fails -->
     @if (!string.IsNullOrEmpty(_depositError))
     {
         <div class="alert alert-danger mt-3">@_depositError</div>
     }
 
+    <!-- ===================== ACCOUNT OVERVIEW ===================== -->
     <h4 class="mt-4">Transaction Overview</h4>
     <ul>
         @foreach (var account in _accounts)
@@ -124,19 +142,26 @@ else
 }
 
 @code {
+    // -----------------------------
+    // Form models for each action
+    // -----------------------------
     private readonly TransferFormModel _transferModel = new();
     private readonly WithdrawFormModel _withdrawModel = new();
     private readonly DepositFormModel _depositModel = new();
 
+    // List of all accounts (and target accounts for transfer)
     private List<IBankAccount> _accounts = new();
     private List<IBankAccount> _toAccounts = new();
 
+    // Error messages
     private string _withdrawError = string.Empty;
     private string _transferError = string.Empty;
     private string _depositError = string.Empty;
 
 
-    // Models med nullable Amount
+    // -----------------------------
+    // Model classes
+    // -----------------------------
     private class TransferFormModel
     {
         public Guid FromAccountId { get; set; }
@@ -156,31 +181,40 @@ else
         public decimal? Amount { get; set; }
     }
 
-    // Init
+    // -----------------------------
+    // Initialization
+    // -----------------------------
     protected override void OnInitialized()
     {
+        // Load all accounts when the component initializes
         _accounts = AccountService.GetAccounts();
         _toAccounts = _accounts;
     }
 
-    // Transfer
+    // -----------------------------
+    // Transfer logic
+    // -----------------------------
     private async Task OnTransferAsync()
     {
-        _withdrawError = _depositError = string.Empty;
-        _transferError = string.Empty;
+        // Reset previous error messages
+        _withdrawError = _depositError = _transferError = string.Empty;
 
         var amount = _transferModel.Amount ?? 0;
+
+        // Validate basic input
         if (_transferModel.FromAccountId == Guid.Empty ||
             _transferModel.ToAccountId == Guid.Empty ||
             amount <= 0)
             return;
 
+        // Prevent transfer to the same account
         if (_transferModel.FromAccountId == _transferModel.ToAccountId)
         {
             _transferError = "Cannot transfer to the same account.";
             return;
         }
 
+        // Check balance
         var fromAccount = _accounts.FirstOrDefault(x => x.Id == _transferModel.FromAccountId);
         if (amount > fromAccount?.Balance)
         {
@@ -188,20 +222,25 @@ else
             return;
         }
 
+        // Execute transfer
         await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
-        _accounts = AccountService.GetAccounts();
     }
 
-    // Withdraw
+    // -----------------------------
+    // Withdraw logic
+    // -----------------------------
     private async Task OnWithdrawAsync()
     {
-        _transferError = _depositError = string.Empty;
-        _withdrawError = string.Empty;
+        _transferError = _depositError = _withdrawError = string.Empty;
         var amount = _withdrawModel.Amount ?? 0;
 
         if (_withdrawModel.AccountId == Guid.Empty || amount <= 0)
+        {
+            _withdrawError = "Withdraw cannot be negative.";
             return;
+        }
 
+        // Check balance
         var account = _accounts.FirstOrDefault(x => x.Id == _withdrawModel.AccountId);
         if (amount > account?.Balance)
         {
@@ -209,26 +248,34 @@ else
             return;
         }
 
+        // Execute withdraw and refresh account list
         await AccountService.WidrawAsync(_withdrawModel.AccountId, amount);
         _accounts = AccountService.GetAccounts();
     }
 
-    // Deposit
+    // -----------------------------
+    // Deposit logic
+    // -----------------------------
     private async Task OnDepositAsync()
     {
-        _withdrawError = _transferError = string.Empty;
-        _depositError = string.Empty;
+        _withdrawError = _transferError = _depositError = string.Empty;
 
         var amount = _depositModel.Amount ?? 0;
 
         if (_depositModel.AccountId == Guid.Empty || amount <= 0)
+        {
+            _depositError = "Deposit cannot be negative.";
             return;
+        }
 
+        // Execute deposit and refresh account list
         await AccountService.DepositAsync(_depositModel.AccountId, amount);
         _accounts = AccountService.GetAccounts();
     }
 
-    // Form logic
+    // -----------------------------
+    // Handle change of “From account” dropdown
+    // -----------------------------
     private void HandleFormChanged(ChangeEventArgs eventArgs)
     {
         if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
@@ -237,6 +284,7 @@ else
 
     private void OnFormChanged(Guid fromId)
     {
+        // Update list of target accounts (exclude selected "from" account)
         var from = _accounts.FirstOrDefault(x => x.Id == fromId);
         _toAccounts = from != null ? _accounts.Where(a => a.Id != fromId).ToList() : _accounts;
         StateHasChanged();
