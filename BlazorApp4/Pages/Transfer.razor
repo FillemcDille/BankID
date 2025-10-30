@@ -1,147 +1,357 @@
 ﻿@page "/transfer"
 @inject IAccountService AccountService
+@inject ILogger<Transfer> Logger
 
-<h3>Transfer</h3>
-@if(_accounts.Count < 2)
-{
-	<p> Skapa minst 2 konton för att göra en transaktion</p>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <!-- TRANSFER SECTION -->
+            @if (_accounts.Count < 2)
+            {
+                <div class="alert alert-warning text-center mt-4">
+                    <i class="bi bi-exclamation-triangle"></i> Create at least 2 accounts to make a transaction.
+                </div>
+            }
+            else
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Transfer</h5>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="_transferModel" OnValidSubmit="OnTransferAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
 
-}
-else
-{
-	<EditForm Model="_model" OnValidSubmit="OnSubmitAsync">
-		<DataAnnotationsValidator/>
-		<ValidationSummary/>
-		<div class="mb-2">
-			<label>Från Konto</label>
-			<InputSelect TValue="Guid"
-						 @bind-Value="_model.FromAccountId"
-						 class="form-select"
-						 @onchange="HandleFormChanged">
-						 <option value="@Guid.Empty">Välj konto..</option>
-				@foreach (var account in _accounts)
-				{
-					<option value="@account.Id">@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</option>
-				}
-			</InputSelect>
-		</div>
+                            <!-- From account -->
+                            <div class="mb-3">
+                                <label class="form-label">From account</label>
+                                <InputSelect TValue="Guid" @bind-Value="_transferModel.FromAccountId" class="form-select" @onchange="HandleFormChanged">
+                                    <option value="@Guid.Empty">Select account...</option>
+                                    @foreach (var account in _accounts)
+                                    {
+                                        <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => _transferModel.FromAccountId)" />
+                            </div>
 
+                            <!-- To account -->
+                            <div class="mb-3">
+                                <label class="form-label">To account</label>
+                                <InputSelect @key="_transferModel.FromAccountId"
+                                             TValue="Guid"
+                                             @bind-Value="_transferModel.ToAccountId"
+                                             class="form-select"
+                                             disabled="@(_transferModel.FromAccountId == Guid.Empty)">
+                                    <option value="@Guid.Empty">Select account...</option>
+                                    @foreach (var account in _toAccounts.Where(x => x.Id != _transferModel.FromAccountId))
+                                    {
+                                        <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => _transferModel.ToAccountId)" />
+                            </div>
 
-		<div class="mb-2">
-			<label>Till konto</label>
-			<InputSelect TValue="Guid"
-						 @bind-Value="_model.ToAccountId"
-						 class="form-select"
-						 disabled="@(_model.FromAccountId == Guid.Empty)">
-				<option value="@Guid.Empty">Välj konto..</option>
-				@foreach (var account in _toAccounts.Where(x=>x.Id != _model.FromAccountId))
-				{
-					<option value="@account.Id">@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType</option>
-				}
-			</InputSelect>
-		</div>
+                            <!-- Amount -->
+                            <div class="mb-3">
+                                <label class="form-label">Amount</label>
+                                <InputNumber TValue="decimal?" @bind-Value="_transferModel.Amount" class="form-control" />
+                                <ValidationMessage For="@(() => _transferModel.Amount)" />
+                            </div>
 
-		<div class="mb-2">
-			<label>Belopp</label>
-			<InputNumber TValue="decimal"@bind-value="_model.Amount" class="form-control"></InputNumber>
-		</div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-arrow-right-circle"></i> Transfer
+                            </button>
+                        </EditForm>
 
-			<button type="submit" class="btn btn-primary">Transfer</button>
+                        @if (!string.IsNullOrEmpty(_transferError))
+                        {
+                            <div class="alert alert-danger mt-3">@_transferError</div>
+                        }
+                    </div>
+                </div>
+            }
 
-			<h4>Transactions Historik</h4>
-			<ul>
-				@foreach(var account in _accounts)
-				{
-					<li>@account.Name - saldo: @account.Balance @account.Currency Kontotyp: @account.AccountType Tid: @account.LastUpdated</li>
-				}
-				</ul>
+            <!-- WITHDRAW SECTION -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-box-arrow-down"></i> Withdraw</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="_withdrawModel" OnValidSubmit="OnWithdrawAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
 
-	</EditForm>
-}
+                        <div class="mb-3">
+                            <label class="form-label">Account</label>
+                            <InputSelect TValue="Guid" @bind-Value="_withdrawModel.AccountId" class="form-select">
+                                <option value="@Guid.Empty">Select account...</option>
+                                @foreach (var account in _accounts)
+                                {
+                                    <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _withdrawModel.AccountId)" />
+                        </div>
 
-	
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <InputNumber TValue="decimal?" @bind-Value="_withdrawModel.Amount" class="form-control" />
+                            <ValidationMessage For="@(() => _withdrawModel.Amount)" />
+                        </div>
 
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-arrow-down-circle"></i> Withdraw
+                        </button>
+                    </EditForm>
 
+                    @if (!string.IsNullOrEmpty(_withdrawError))
+                    {
+                        <div class="alert alert-danger mt-3">@_withdrawError</div>
+                    }
+                </div>
+            </div>
 
+            <!-- DEPOSIT SECTION -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-box-arrow-in-up"></i> Deposit</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="_depositModel" OnValidSubmit="OnDepositAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
 
+                        <div class="mb-3">
+                            <label class="form-label">Account</label>
+                            <InputSelect TValue="Guid" @bind-Value="_depositModel.AccountId" class="form-select">
+                                <option value="@Guid.Empty">Select account...</option>
+                                @foreach (var account in _accounts)
+                                {
+                                    <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _depositModel.AccountId)" />
+                        </div>
 
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <InputNumber TValue="decimal?" @bind-Value="_depositModel.Amount" class="form-control" />
+                            <ValidationMessage For="@(() => _depositModel.Amount)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-arrow-up-circle"></i> Deposit
+                        </button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(_depositError))
+                    {
+                        <div class="alert alert-danger mt-3">@_depositError</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!---gHistory-->
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Transactions History</h5>
+                </div>
+                <div class="card-body">
+                    @if (_accounts.Count == 0)
+                    {
+                        <p class="text-muted">No accounts available yet.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group">
+                            @foreach (var account in _accounts)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@account.Name</strong><br />
+                                    Balance: @($"{account.Balance:N2} {account.Currency}")<br />
+                                    Type: @account.AccountType<br />
+                                    <small class="text-muted">Last updated: @account.LastUpdated.ToLocalTime()</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 
 @code {
-	private readonly TransferFormModel _model = new();
-	private List<IBankAccount> _accounts = new();
-	private List<IBankAccount> _toAccounts = new();
+    // -----------------------------
+    // Form models for each action
+    // -----------------------------
+    private readonly TransferFormModel _transferModel = new();
+    private readonly WithdrawFormModel _withdrawModel = new();
+    private readonly DepositFormModel _depositModel = new();
+
+    // List of all accounts (and target accounts for transfer)
+    private List<IBankAccount> _accounts = new();
+    private List<IBankAccount> _toAccounts = new();
+
+    // Error messages
+    private string _withdrawError = string.Empty;
+    private string _transferError = string.Empty;
+    private string _depositError = string.Empty;
+
+    // -----------------------------
+    // Model classes
+    // -----------------------------
+    private class TransferFormModel
+    {
+        public Guid FromAccountId { get; set; }
+        public Guid ToAccountId { get; set; }
+        public decimal? Amount { get; set; }
+    }
+
+    private class WithdrawFormModel
+    {
+        public Guid AccountId { get; set; }
+        public decimal? Amount { get; set; }
+    }
+
+    private class DepositFormModel
+    {
+        public Guid AccountId { get; set; }
+        public decimal? Amount { get; set; }
+    }
+
+    // -----------------------------
+    // Initialization
+    // -----------------------------
+    protected override async Task OnInitializedAsync()
+    {
+        // Load all accounts when the component initializes
+        await AccountService.EnsureLoadedAsync();
+        _accounts = AccountService.GetAccounts();
+        _toAccounts = _accounts;
+    }
+
+    // -----------------------------
+    // Transfer logic
+    // -----------------------------
+    private async Task OnTransferAsync()
+    {
+        // Reset previous error messages
+        _withdrawError = _depositError = _transferError = string.Empty;
+
+        var amount = _transferModel.Amount ?? 0;
+        Logger.LogInformation("Transfer submit clicked. From={from} To={To} Amount={Amount}",
+        _transferModel.FromAccountId, _transferModel.ToAccountId, amount);
 
 
-	private class TransferFormModel
-	{
-		public Guid FromAccountId { get; set; }
-		public Guid ToAccountId { get; set; }
-		public decimal Amount { get; set; }
-	}
+        // Validate basic input
+        if (_transferModel.FromAccountId == Guid.Empty ||
+            _transferModel.ToAccountId == Guid.Empty || amount <= 0)
+        {
+            _transferError = "Select Valid From/To accounts and an amount greater than zero";
+            Logger.LogWarning("Invalid transfer input.");
+            return;
+        }
 
-	protected override void OnInitialized()
-	{
-		_accounts = AccountService.GetAccounts();
-		_toAccounts = _accounts;
-	}
+        // Prevent transfer to the same account
+        if (_transferModel.FromAccountId == _transferModel.ToAccountId)
+        {
+            _transferError = "Cannot transfer to the same account.";
+            Logger.LogWarning("Transfer blocked: same account selected");
+            return;
+        }
 
-	private async Task OnSubmitAsync()
-	{
-		if(_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty ||_model.Amount <= 0)
-		{
-			StateHasChanged();
-			return;
-		}
-		if(_model.FromAccountId == _model.ToAccountId)
-		{
-			StateHasChanged();
-			return;
-		}
+        // Check balance
+        var fromAccount = _accounts.FirstOrDefault(x => x.Id == _transferModel.FromAccountId);
+        if (amount > fromAccount?.Balance)
+        {
+            _transferError = "Insufficient funds.";
+            Logger.LogWarning("Insufficient funds. Available={Balance} Tried={Amount}", fromAccount?.Balance, amount);
+            return;
+        }
+        try
+        {
+            await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
+            Logger.LogInformation("Transfer completed.");
 
-		try
-		{
-			await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
+        }catch(Exception exception)
+        {
+            _transferError = exception.Message;
+            Logger.LogError(exception, "Transfer failed.");
+        }
+        // Execute transfer
+        
+    }
 
-			_accounts = AccountService.GetAccounts();
+    // -----------------------------
+    // Withdraw logic
+    // -----------------------------
+    private async Task OnWithdrawAsync()
+    {
+        _transferError = _depositError = _withdrawError = string.Empty;
+        var amount = _withdrawModel.Amount ?? 0;
 
-			var from = _accounts.First(x => x.Id == _model.FromAccountId);
-			var to = _accounts.First(x => x.Id == _model.ToAccountId);
+        if (_withdrawModel.AccountId == Guid.Empty || amount <= 0)
+        {
+            _withdrawError = "Withdraw cannot be negative, or empty.";
+            return;
+        }
 
+        // Check balance
+        var account = _accounts.FirstOrDefault(x => x.Id == _withdrawModel.AccountId);
+        if (amount > account?.Balance)
+        {
+            _withdrawError = "Not enough balance for withdrawal.";
+            return;
+        }
 
-		}
-		catch(Exception exception)
-		{
-			Console.WriteLine(exception.Message);
-		}
+        // Execute withdraw and refresh account list
+        await AccountService.WidrawAsync(_withdrawModel.AccountId, amount);
+        _accounts = AccountService.GetAccounts();
+        _withdrawModel.Amount = null;
+    }
 
-		return;
-	}
-	private void HandleFormChanged(ChangeEventArgs eventArgs)
-	{	
-		if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
-		{
-			OnFormChanged(id);
-		}
+    // -----------------------------
+    // Deposit logic
+    // -----------------------------
+    private async Task OnDepositAsync()
+    {
+        _withdrawError = _transferError = _depositError = string.Empty;
 
-	}
+        var amount = _depositModel.Amount ?? 0;
 
+        if (_depositModel.AccountId == Guid.Empty || amount <= 0)
+        {
+            _depositError = "Deposit cannot be negative.";
+            return;
+        }
 
-	private void OnFormChanged(Guid fromId)
-	{
-		var from = _accounts.FirstOrDefault(x => x.Id == fromId);
+        // Execute deposit and refresh account list
+        await AccountService.DepositAsync(_depositModel.AccountId, amount);
+        _accounts = AccountService.GetAccounts();
+        _depositModel.Amount = null;
+    }
 
-		if(from != null)
-		{
-			_toAccounts = _accounts.Where(account => account.Id != fromId).ToList();
-		}
-		else
-		{
-			_accounts = _accounts.ToList();
+    // -----------------------------
+    // Handle change of “From account” dropdown
+    // -----------------------------
+    private void HandleFormChanged(ChangeEventArgs eventArgs)
+    {
+        if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
+            OnFormChanged(id);
+    }
 
-			_model.ToAccountId = Guid.Empty;
-		}
-		StateHasChanged();
-	}
+    private void OnFormChanged(Guid fromId)
+    {
+        // Update list of target accounts (exclude selected "from" account)
+        var from = _accounts.FirstOrDefault(x => x.Id == fromId);
+        _toAccounts = from != null ? _accounts.Where(a => a.Id != fromId).ToList() : _accounts;
+        StateHasChanged();
+    }
 }
