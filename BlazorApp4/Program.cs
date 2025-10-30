@@ -13,7 +13,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IStorageService, LokalStorageService>();
 
-// Configure logging for Blazor WebAssembly (.NET8)
+// Configure logging for Blazor WebAssembly ".NET8 "
 // The Browser Console provider is enabled by default in WebAssembly.
 // Adjust levels/filters as needed.
 builder.Logging.SetMinimumLevel(LogLevel.Information);

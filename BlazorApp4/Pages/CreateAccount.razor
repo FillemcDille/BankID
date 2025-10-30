@@ -1,6 +1,5 @@
 ﻿@page "/createaccount"
 @inject IAccountService AccountService
-@* @using BlazorApp4.Services *@
 @using System.ComponentModel.DataAnnotations
 
 <!--Create account form-->
@@ -84,9 +83,10 @@ else
     //Private List for IBankAccount
     private List<IBankAccount> _accounts = new();
 
-    //Runs when the component loads – fetches all accounts
-    protected override void OnInitialized()
+    //Runs when the component loads, fetches all accounts
+    protected override async Task OnInitializedAsync()
     {
+        await AccountService.EnsureLoadedAsync();
         _accounts =  AccountService.GetAccounts();
     }
 

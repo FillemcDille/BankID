@@ -10,7 +10,7 @@
 }
 else
 {
-    <!-- ===================== TRANSFER SECTION ===================== -->
+    <!-------------- TRANSFER SECTION  ------------------>
     <EditForm Model="_transferModel" OnValidSubmit="OnTransferAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -62,7 +62,7 @@ else
 
     <hr />
 
-    <!-- ===================== WITHDRAW SECTION ===================== -->
+    <!-- --------------------- WITHDRAW SECTION --------------------- -->
     <EditForm Model="_withdrawModel" OnValidSubmit="OnWithdrawAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -99,7 +99,7 @@ else
 
     <hr />
 
-    <!-- ===================== DEPOSIT SECTION ===================== -->
+    <!---------------------- DEPOSIT SECTION ----------------- -->
     <EditForm Model="_depositModel" OnValidSubmit="OnDepositAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -134,7 +134,7 @@ else
         <div class="alert alert-danger mt-3">@_depositError</div>
     }
 
-    <!-- ===================== ACCOUNT OVERVIEW ===================== -->
+    <!-------------------- ACCOUNT OVERVIEW -------------------- -->
     <h4 class="mt-4">Transaction Overview</h4>
     <ul>
         @foreach (var account in _accounts)
@@ -163,7 +163,6 @@ else
     private string _transferError = string.Empty;
     private string _depositError = string.Empty;
 
-
     // -----------------------------
     // Model classes
     // -----------------------------
@@ -189,9 +188,10 @@ else
     // -----------------------------
     // Initialization
     // -----------------------------
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
         // Load all accounts when the component initializes
+        await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
         _toAccounts = _accounts;
     }
