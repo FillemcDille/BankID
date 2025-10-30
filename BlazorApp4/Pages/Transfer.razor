@@ -188,9 +188,8 @@
 
 
 @code {
-    // -----------------------------
+
     // Form models for each action
-    // -----------------------------
     private readonly TransferFormModel _transferModel = new();
     private readonly WithdrawFormModel _withdrawModel = new();
     private readonly DepositFormModel _depositModel = new();
@@ -204,9 +203,8 @@
     private string _transferError = string.Empty;
     private string _depositError = string.Empty;
 
-    // -----------------------------
+
     // Model classes
-    // -----------------------------
     private class TransferFormModel
     {
         public Guid FromAccountId { get; set; }
@@ -224,11 +222,12 @@
     {
         public Guid AccountId { get; set; }
         public decimal? Amount { get; set; }
+
     }
 
-    // -----------------------------
-    // Initialization
-    // -----------------------------
+    /// <summary>
+    /// Component initializer - loads all acounts
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         // Load all accounts when the component initializes
@@ -237,9 +236,9 @@
         _toAccounts = _accounts;
     }
 
-    // -----------------------------
-    // Transfer logic
-    // -----------------------------
+    /// <summary>
+    /// Transfer logic
+    /// </summary>
     private async Task OnTransferAsync()
     {
         // Reset previous error messages
@@ -286,12 +285,11 @@
             Logger.LogError(exception, "Transfer failed.");
         }
         // Execute transfer
-        
     }
 
-    // -----------------------------
-    // Withdraw logic
-    // -----------------------------
+    /// <summary>
+    /// Widraw logic
+    /// </summary>
     private async Task OnWithdrawAsync()
     {
         _transferError = _depositError = _withdrawError = string.Empty;
@@ -317,9 +315,9 @@
         _withdrawModel.Amount = null;
     }
 
-    // -----------------------------
-    // Deposit logic
-    // -----------------------------
+    /// <summary>
+    /// Deposit Logic
+    /// </summary>
     private async Task OnDepositAsync()
     {
         _withdrawError = _transferError = _depositError = string.Empty;
@@ -338,9 +336,10 @@
         _depositModel.Amount = null;
     }
 
-    // -----------------------------
-    // Handle change of “From account” dropdown
-    // -----------------------------
+    /// <summary>
+    ///  Handle change of “From account” dropdown
+    /// </summary>
+    /// <param name="eventArgs"></param>
     private void HandleFormChanged(ChangeEventArgs eventArgs)
     {
         if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
