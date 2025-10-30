@@ -1,25 +1,18 @@
-﻿namespace BlazorApp4.Interfaces;
-
-/// <summary>
+﻿/// <summary>
 /// Interface containing the BankAccount methods
 /// </summary>
-
-
-
-
 public interface IBankAccount
 {
     Guid Id { get; }
     string Name { get; }
-    Domain.AccountType AccountType { get; }
+    AccountType AccountType { get; }
     Currency Currency { get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
-
+    
     void Withdraw(decimal amount);
     void Deposit(decimal amount);
-
     void TransferTo(BankAccount toAccount, decimal amount);
 
-    IReadOnlyList<Transaction> Transactions { get;}
+    List<Transaction> Transactions { get; }
 }
