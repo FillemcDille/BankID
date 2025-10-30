@@ -1,95 +1,137 @@
-﻿
-
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace BlazorApp4.Domain
 {
+    /// <summary>
+    /// Represents a bank account that supports deposits, withdrawals, transfers, and transaction history.
+    /// </summary>
     public class BankAccount : IBankAccount
     {
+        // Properties
         public Guid Id { get; private set; } = Guid.NewGuid();
         public string Name { get; private set; }
         public AccountType AccountType { get; private set; }
         public Currency Currency { get; private set; }
         public decimal Balance { get; private set; }
         public DateTime LastUpdated { get; private set; }
+        public List<Transaction> Transactions => _transactions;
 
-        public IReadOnlyList<Transaction> Transactions => _transaction;
+        private readonly List<Transaction> _transactions = new();
 
-        private readonly List<Transaction> _transaction = new();
-        
+        // Constructors
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
             Name = name;
             AccountType = accountType;
             Currency = currency;
             Balance = initialBalance;
-            LastUpdated = DateTime.Now;
+            LastUpdated = DateTime.UtcNow;
         }
 
         [JsonConstructor]
-        public BankAccount(Guid id, string name, AccountType accountType, Currency currency, decimal balance,
-            DateTime lastUpdated)
+        public BankAccount(Guid id, string name, AccountType accountType, Currency currency, decimal balance, DateTime lastUpdated, List<Transaction>? transactions = null)
         {
             Id = id;
             Name = name;
             AccountType = accountType;
-            Balance = balance;
             Currency = currency;
-
+            Balance = balance;
             LastUpdated = lastUpdated;
+            if (transactions != null)
+                _transactions = transactions;
         }
-
 
         /// <summary>
-        /// Nedan är kalkyleringar för withdraw och deposit
+        /// Withdraws the specified amount from the account.
         /// </summary>
-
+        /// <exception cref="ArgumentException">If the amount is not positive.</exception>
+        /// <exception cref="InvalidOperationException">If balance is insufficient.</exception>
         public void Withdraw(decimal amount)
         {
-            if (amount <= 0) throw new ArgumentException("Amount must be positive.", nameof(amount));
-            if (amount > Balance) throw new InvalidOperationException("Insufficient funds.");
+            if (amount <= 0)
+                throw new ArgumentException("Amount must be positive.", nameof(amount));
+            if (amount > Balance)
+                throw new InvalidOperationException("Insufficient funds.");
+
             Balance -= amount;
-            LastUpdated = DateTime.Now;
+            LastUpdated = DateTime.UtcNow;
+
+            _transactions.Add(new Transaction
+            {
+                TransactionType = TransactionType.Withdraw,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                TimeStamp = DateTime.UtcNow
+            });
         }
 
+        /// <summary>
+        /// Deposits the specified amount into the account.
+        /// </summary>
+        /// <exception cref="ArgumentException">If the amount is not positive.</exception>
         public void Deposit(decimal amount)
         {
-            if (amount <= 0) throw new ArgumentException("Amount must be positive.", nameof(amount));
-            Balance += amount;
-            LastUpdated = DateTime.Now;
+            if (amount <= 0)
+                throw new ArgumentException("Amount must be positive.", nameof(amount));
 
+            Balance += amount;
+            LastUpdated = DateTime.UtcNow;
+
+            _transactions.Add(new Transaction
+            {
+                TransactionType = TransactionType.Deposit,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                TimeStamp = DateTime.UtcNow
+            });
         }
 
+        /// <summary>
+        /// Transfers the specified amount to another account.
+        /// </summary>
+        /// <param name="toAccount">The target account.</param>
+        /// <param name="amount">The amount to transfer.</param>
+        /// <exception cref="ArgumentNullException">If <paramref name="toAccount"/> is null.</exception>
+        /// <exception cref="ArgumentException">If amount is not positive.</exception>
+        /// <exception cref="InvalidOperationException">If balance is insufficient.</exception>
         public void TransferTo(BankAccount toAccount, decimal amount)
         {
-            //Från Vilket konto
+            if (toAccount == null)
+                throw new ArgumentNullException(nameof(toAccount));
+            if (amount <= 0)
+                throw new ArgumentException("Amount must be positive.", nameof(amount));
+            if (amount > Balance)
+                throw new InvalidOperationException("Insufficient funds.");
+
+            // From account
             Balance -= amount;
-            LastUpdated = DateTime.Now;
-            _transaction.Add(new Transaction
+            LastUpdated = DateTime.UtcNow;
+
+            _transactions.Add(new Transaction
             {
                 TransactionType = TransactionType.TransferOut,
                 Amount = amount,
                 BalanceAfter = Balance,
                 FromAccountId = Id,
                 ToAccountId = toAccount.Id,
-                TimeStamp = DateTime.Now // ändra t
-                
-
+                TimeStamp = DateTime.UtcNow
             });
 
-            //till vilket konto
+            // To account
             toAccount.Balance += amount;
-            toAccount.LastUpdated = DateTime.Now;
-            toAccount._transaction.Add(new Transaction
+            toAccount.LastUpdated = DateTime.UtcNow;
+
+            toAccount._transactions.Add(new Transaction
             {
                 TransactionType = TransactionType.TransferIn,
                 Amount = amount,
-                BalanceAfter = Balance,
+                BalanceAfter = toAccount.Balance,
                 FromAccountId = Id,
                 ToAccountId = toAccount.Id,
-                TimeStamp = DateTime.Now
+                TimeStamp = DateTime.UtcNow
             });
         }
-
     }
 }
