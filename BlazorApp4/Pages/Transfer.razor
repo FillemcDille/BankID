@@ -1,190 +1,190 @@
 ﻿@page "/transfer"
 @inject IAccountService AccountService
 @inject ILogger<Transfer> Logger
-<!--Transfer page header-->
 
-@if (_accounts.Count < 2)
-{
-    <div class="alert alert-warning text-center mt-4">
-        <i class="bi bi-exclamation-triangle"></i> Create at least 2 accounts to make a transaction.
-    </div>
-}
-else
-{
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Transfer</h5>
-        </div>
-        <div class="card-body">
-            <EditForm Model="_transferModel" OnValidSubmit="OnTransferAsync">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
-
-                <!-- From account -->
-                <div class="mb-3">
-                    <label class="form-label">From account</label>
-                    <InputSelect TValue="Guid" @bind-Value="_transferModel.FromAccountId" class="form-select" @onchange="HandleFormChanged">
-                        <option value="@Guid.Empty">Select account...</option>
-                        @foreach (var account in _accounts)
-                        {
-                            <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => _transferModel.FromAccountId)" />
-                </div>
-
-                <!-- To account -->
-                <div class="mb-3">
-                    <label class="form-label">To account</label>
-                    <InputSelect @key="_transferModel.FromAccountId"
-                                 TValue="Guid"
-                                 @bind-Value="_transferModel.ToAccountId"
-                                 class="form-select"
-                                 disabled="@(_transferModel.FromAccountId == Guid.Empty)">
-                        <option value="@Guid.Empty">Select account...</option>
-                        @foreach (var account in _toAccounts.Where(x => x.Id != _transferModel.FromAccountId))
-                        {
-                            <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => _transferModel.ToAccountId)" />
-                </div>
-
-                <!-- Amount -->
-                <div class="mb-3">
-                    <label class="form-label">Amount</label>
-                    <InputNumber TValue="decimal?" @bind-Value="_transferModel.Amount" class="form-control" />
-                    <ValidationMessage For="@(() => _transferModel.Amount)" />
-                </div>
-
-                <!-- Submit -->
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-arrow-right-circle"></i> Transfer
-                </button>
-            </EditForm>
-
-            @if (!string.IsNullOrEmpty(_transferError))
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <!-- TRANSFER SECTION -->
+            @if (_accounts.Count < 2)
             {
-                <div class="alert alert-danger mt-3">@_transferError</div>
+                <div class="alert alert-warning text-center mt-4">
+                    <i class="bi bi-exclamation-triangle"></i> Create at least 2 accounts to make a transaction.
+                </div>
             }
+            else
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Transfer</h5>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="_transferModel" OnValidSubmit="OnTransferAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <!-- From account -->
+                            <div class="mb-3">
+                                <label class="form-label">From account</label>
+                                <InputSelect TValue="Guid" @bind-Value="_transferModel.FromAccountId" class="form-select" @onchange="HandleFormChanged">
+                                    <option value="@Guid.Empty">Select account...</option>
+                                    @foreach (var account in _accounts)
+                                    {
+                                        <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => _transferModel.FromAccountId)" />
+                            </div>
+
+                            <!-- To account -->
+                            <div class="mb-3">
+                                <label class="form-label">To account</label>
+                                <InputSelect @key="_transferModel.FromAccountId"
+                                             TValue="Guid"
+                                             @bind-Value="_transferModel.ToAccountId"
+                                             class="form-select"
+                                             disabled="@(_transferModel.FromAccountId == Guid.Empty)">
+                                    <option value="@Guid.Empty">Select account...</option>
+                                    @foreach (var account in _toAccounts.Where(x => x.Id != _transferModel.FromAccountId))
+                                    {
+                                        <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => _transferModel.ToAccountId)" />
+                            </div>
+
+                            <!-- Amount -->
+                            <div class="mb-3">
+                                <label class="form-label">Amount</label>
+                                <InputNumber TValue="decimal?" @bind-Value="_transferModel.Amount" class="form-control" />
+                                <ValidationMessage For="@(() => _transferModel.Amount)" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-arrow-right-circle"></i> Transfer
+                            </button>
+                        </EditForm>
+
+                        @if (!string.IsNullOrEmpty(_transferError))
+                        {
+                            <div class="alert alert-danger mt-3">@_transferError</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- WITHDRAW SECTION -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-box-arrow-down"></i> Withdraw</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="_withdrawModel" OnValidSubmit="OnWithdrawAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Account</label>
+                            <InputSelect TValue="Guid" @bind-Value="_withdrawModel.AccountId" class="form-select">
+                                <option value="@Guid.Empty">Select account...</option>
+                                @foreach (var account in _accounts)
+                                {
+                                    <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _withdrawModel.AccountId)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <InputNumber TValue="decimal?" @bind-Value="_withdrawModel.Amount" class="form-control" />
+                            <ValidationMessage For="@(() => _withdrawModel.Amount)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-arrow-down-circle"></i> Withdraw
+                        </button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(_withdrawError))
+                    {
+                        <div class="alert alert-danger mt-3">@_withdrawError</div>
+                    }
+                </div>
+            </div>
+
+            <!-- DEPOSIT SECTION -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-box-arrow-in-up"></i> Deposit</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="_depositModel" OnValidSubmit="OnDepositAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Account</label>
+                            <InputSelect TValue="Guid" @bind-Value="_depositModel.AccountId" class="form-select">
+                                <option value="@Guid.Empty">Select account...</option>
+                                @foreach (var account in _accounts)
+                                {
+                                    <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _depositModel.AccountId)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <InputNumber TValue="decimal?" @bind-Value="_depositModel.Amount" class="form-control" />
+                            <ValidationMessage For="@(() => _depositModel.Amount)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-arrow-up-circle"></i> Deposit
+                        </button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(_depositError))
+                    {
+                        <div class="alert alert-danger mt-3">@_depositError</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!---History-->
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Transactions History</h5>
+                </div>
+                <div class="card-body">
+                    @if (_accounts.Count == 0)
+                    {
+                        <p class="text-muted">No accounts available yet.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group">
+                            @foreach (var account in _accounts)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@account.Name</strong><br />
+                                    Balance: @($"{account.Balance:N2} {account.Currency}")<br />
+                                    Type: @account.AccountType<br />
+                                    <small class="text-muted">Last updated: @account.LastUpdated.ToLocalTime()</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
         </div>
     </div>
-}
-
-    <hr />
-
-    <!-- --------------------- WITHDRAW SECTION --------------------- -->
-<div class="card mb-4 shadow-sm">
-    <div class="card-header bg-danger text-white">
-        <h5 class="mb-0"><i class="bi bi-box-arrow-down"></i> Withdraw</h5>
-    </div>
-    <div class="card-body">
-        <EditForm Model="_withdrawModel" OnValidSubmit="OnWithdrawAsync">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-
-            <!-- Select account -->
-            <div class="mb-3">
-                <label class="form-label">Account</label>
-                <InputSelect TValue="Guid" @bind-Value="_withdrawModel.AccountId" class="form-select">
-                    <option value="@Guid.Empty">Select account...</option>
-                    @foreach (var account in _accounts)
-                    {
-                        <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="@(() => _withdrawModel.AccountId)" />
-            </div>
-
-            <!-- Amount -->
-            <div class="mb-3">
-                <label class="form-label">Amount</label>
-                <InputNumber TValue="decimal?" @bind-Value="_withdrawModel.Amount" class="form-control" />
-                <ValidationMessage For="@(() => _withdrawModel.Amount)" />
-            </div>
-
-            <!-- Submit -->
-            <button type="submit" class="btn btn-danger w-100">
-                <i class="bi bi-arrow-down-circle"></i> Withdraw
-            </button>
-        </EditForm>
-
-        @if (!string.IsNullOrEmpty(_withdrawError))
-        {
-            <div class="alert alert-danger mt-3">@_withdrawError</div>
-        }
-    </div>
 </div>
 
-    <hr />
-
-    <!---------------------- DEPOSIT SECTION ------------------->
-<div class="card mb-4 shadow-sm">
-    <div class="card-header bg-success text-white">
-        <h5 class="mb-0"><i class="bi bi-box-arrow-in-up"></i> Deposit</h5>
-    </div>
-    <div class="card-body">
-        <EditForm Model="_depositModel" OnValidSubmit="OnDepositAsync">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-
-            <!-- Select account -->
-            <div class="mb-3">
-                <label class="form-label">Account</label>
-                <InputSelect TValue="Guid" @bind-Value="_depositModel.AccountId" class="form-select">
-                    <option value="@Guid.Empty">Select account...</option>
-                    @foreach (var account in _accounts)
-                    {
-                        <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="@(() => _depositModel.AccountId)" />
-            </div>
-
-            <!-- Amount -->
-            <div class="mb-3">
-                <label class="form-label">Amount</label>
-                <InputNumber TValue="decimal?" @bind-Value="_depositModel.Amount" class="form-control" />
-                <ValidationMessage For="@(() => _depositModel.Amount)" />
-            </div>
-
-            <!-- Submit -->
-            <button type="submit" class="btn btn-success w-100">
-                <i class="bi bi-arrow-up-circle"></i> Deposit
-            </button>
-        </EditForm>
-
-        @if (!string.IsNullOrEmpty(_depositError))
-        {
-            <div class="alert alert-danger mt-3">@_depositError</div>
-        }
-    </div>
-</div>
-<div class="card mb-4 shadow-sm">
-    <div class="card-header bg-info text-white">
-        <h5 class="mb-0"><i class="bi bi-journal-text"></i> Transactions Historik</h5>
-    </div>
-    <div class="card-body">
-        @if (_accounts.Count == 0)
-        {
-            <p class="text-muted">No accounts available yet.</p>
-        }
-        else
-        {
-            <ul class="list-group">
-                @foreach (var account in _accounts)
-                {
-                    <li class="list-group-item">
-                        <strong>@account.Name</strong><br />
-                        Saldo: @($"{account.Balance:N2} {account.Currency}")<br />
-                        Kontotyp: @account.AccountType<br />
-                        <small class="text-muted">Senast uppdaterad: @account.LastUpdated.ToLocalTime()</small>
-                    </li>
-                }
-            </ul>
-        }
-    </div>
-</div>
 
 
 @code {
