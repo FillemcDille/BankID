@@ -58,7 +58,7 @@ else
                 </div>
 
                 <!-- Submit -->
-                <button type="submit" class="btn btn-success w-100">
+                <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-arrow-right-circle"></i> Transfer
                 </button>
             </EditForm>
@@ -160,6 +160,31 @@ else
         }
     </div>
 </div>
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-journal-text"></i> Transactions Historik</h5>
+    </div>
+    <div class="card-body">
+        @if (_accounts.Count == 0)
+        {
+            <p class="text-muted">No accounts available yet.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var account in _accounts)
+                {
+                    <li class="list-group-item">
+                        <strong>@account.Name</strong><br />
+                        Saldo: @($"{account.Balance:N2} {account.Currency}")<br />
+                        Kontotyp: @account.AccountType<br />
+                        <small class="text-muted">Senast uppdaterad: @account.LastUpdated.ToLocalTime()</small>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
 
 
 @code {
@@ -229,6 +254,7 @@ else
         if (_transferModel.FromAccountId == Guid.Empty ||
             _transferModel.ToAccountId == Guid.Empty || amount <= 0)
         {
+            _transferError = "Select Valid From/To accounts and an amount greater than zero";
             Logger.LogWarning("Invalid transfer input.");
             return;
         }
@@ -253,6 +279,7 @@ else
         {
             await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
             Logger.LogInformation("Transfer completed.");
+
         }catch(Exception exception)
         {
             _transferError = exception.Message;
@@ -272,7 +299,7 @@ else
 
         if (_withdrawModel.AccountId == Guid.Empty || amount <= 0)
         {
-            _withdrawError = "Withdraw cannot be negative.";
+            _withdrawError = "Withdraw cannot be negative, or empty.";
             return;
         }
 
@@ -287,6 +314,7 @@ else
         // Execute withdraw and refresh account list
         await AccountService.WidrawAsync(_withdrawModel.AccountId, amount);
         _accounts = AccountService.GetAccounts();
+        _withdrawModel.Amount = null;
     }
 
     // -----------------------------
@@ -307,6 +335,7 @@ else
         // Execute deposit and refresh account list
         await AccountService.DepositAsync(_depositModel.AccountId, amount);
         _accounts = AccountService.GetAccounts();
+        _depositModel.Amount = null;
     }
 
     // -----------------------------

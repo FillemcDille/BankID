@@ -5,16 +5,18 @@
 <!--Create account form-->
 <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
-    <ValidationSummary />
-
+    
     <div class="d-flex justify-content-center align-items-center flex-column mt-5 mb-4;">
         <h3>Create account</h3>
 
+        <!--Account name-->
         <div class="mb-3">
             <label>Account name</label><br />
             <InputText @bind-Value="_formModel.Name" class="form-control" />
+            <ValidationMessage For="@(() => _formModel.Name)" />
         </div>
 
+        <!--Account type-->
         <div class="mb-3">
             <label>Account type</label><br />
             <InputSelect @bind-Value="_formModel.Type" class="form-select">
@@ -22,8 +24,10 @@
                 <option value="@AccountType.Deposit">Basic account</option>
                 <option value="@AccountType.Savings">Savings account</option>
             </InputSelect>
+            <ValidationMessage For="@(() => _formModel.Type)" />
         </div>
 
+        <!--Currency-->
         <div class="mb-3">
             <label>Currency</label><br />
             <InputSelect @bind-Value="_formModel.Currency" class="form-select">
@@ -32,11 +36,14 @@
                     <option value="@currency">@currency</option>
                 }
             </InputSelect>
+            <ValidationMessage For="@(() => _formModel.Currency)" />
         </div>
 
+        <!--Opening balance-->
         <div class="mb-3">
             <label>Opening balance</label><br />
             <InputNumber @bind-Value="_formModel.InitialBalance" class="form-control" />
+            <ValidationMessage For="@(() => _formModel.InitialBalance)" />
         </div>
 
         <button type="submit" class="btn btn-success">Create</button>
