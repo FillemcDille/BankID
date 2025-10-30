@@ -2,7 +2,10 @@
 @inject IAccountService AccountService
 
 <!-- ===================== HISTORY PAGE ===================== -->
-<h3>History</h3>
+<h3 class="text-center mt-4 mb-3">
+    <i class="bi bi-clock-history"></i> Transaction History
+</h3>
+<hr class="w-50 mx-auto" />
 
 <!-- If there are no accounts yet -->
 @if (_accounts == null)
@@ -12,25 +15,28 @@
 else
 {
     <!-- Select which account's history to view -->
-    <div class="mb-2">
-        <label>Select account!</label>
-        <InputSelect TValue="Guid"
-                     class="form-select"
-                     id="accountSelect"
-                     @bind-Value="SelectedAccountId">
-            @foreach (var account in _accounts)
-            {
-                <option value="@account.Id">@account.Name - Balance: @($"{account.Balance:N2} SEK")</option>
-            }
-        </InputSelect>
-    </div>
+   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+     <div class="mb-2">
+         <label class=form-label>Select account!</label>
+         <InputSelect TValue="Guid"
+                      class="form-select"
+                      id="accountSelect"
+                      @bind-Value="SelectedAccountId">
+             @foreach (var account in _accounts)
+             {   
+                 <option value="@account.Id">@account.Name - Balance: @($"{account.Balance:N2} SEK")</option>
+             }
+         </InputSelect>
+     </div>
 
+    </div>
     <!-- Sorting controls for transactions -->
-    <div class="mb-2">
-        <button class="btn btn-sm" @onclick="() => SetSort(SortKey.Date)">
+    <div class="mt-3 mt-md-0">
+        <label class="form-label">Sort by</label><br />
+        <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => SetSort(SortKey.Date)">
             Sort: Date @(currentKey == SortKey.Date ? (descending ? "↑" : "↓") : "")
         </button>
-        <button class="btn btn-sm" @onclick="() => SetSort(SortKey.Amount)">
+        <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Amount)">
             Sort: Amount @(currentKey == SortKey.Amount ? (descending ? "↑" : "↓") : "")
         </button>
     </div>
@@ -43,7 +49,7 @@ else
     else
     {
         <!-- Transaction table -->
-        <table class="table table-sm">
+        <table class="table table-sm table-hover table-bordered text-center">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -59,13 +65,27 @@ else
                     <tr>
                         <td>@transaction.TimeStamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@($"{transaction.Amount:N2} SEK")</td>
-                        <td>@transaction.TransactionType</td>
+                        <td>
+                            @if (transaction.TransactionType == TransactionType.Deposit)
+                            {
+                                <span class="badge bg-success">Deposit</span>
+                            }
+                            else if (transaction.TransactionType == TransactionType.Withdraw)
+                            {
+                                <span class="badge bg-danger">Withdrawal</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">Transfer</span>
+                            }
+                        </td>
+
                         <td>@($"{transaction.BalanceAfter:N2} SEK")</td>
                         <td>
                             <!-- Display shortened From → To account IDs -->
                             @if (transaction.FromAccountId.HasValue || transaction.ToAccountId.HasValue)
                             {
-                                <span>
+                                <span title="From -> To account IDs">
                                     @((transaction.FromAccountId?.ToString() is string from && from.Length >= 6
                                                         ? from.Substring(0, 6) : "None"))
                                     →
@@ -92,7 +112,6 @@ else
     // Sorting
     private SortKey currentKey = SortKey.Date;
     private bool descending = true;
-
 
     // Enum to define sorting options
     private enum SortKey

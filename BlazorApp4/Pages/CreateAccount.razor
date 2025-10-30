@@ -3,65 +3,70 @@
 @using System.ComponentModel.DataAnnotations
 
 <!--Create account form-->
-<h3>Create account</h3>
 <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <!-- BOX for account name -->
-    <div class="mb-2">
-        <label>Account name</label>
-        <InputText @bind-Value="_formModel.Name" />
-    </div>
+    <div class="d-flex justify-content-center align-items-center flex-column mt-5 mb-4;">
+        <h3>Create account</h3>
 
-    <!-- BOX for account type -->
-    <div class="mb-2">
-        <label>Account type</label>
-        <InputSelect @bind-Value="_formModel.Type">
-            <option value="">Select account!</option>
-            <option value="@AccountType.Deposit">Basic account</option>
-            <option value="@AccountType.Savings">Savings account</option>
-        </InputSelect>
-    </div>
+        <div class="mb-3">
+            <label>Account name</label><br />
+            <InputText @bind-Value="_formModel.Name" class="form-control" />
+        </div>
 
-    <!-- BOX for currency -->
-    <div class="mb-2">
-        <label>Currency</label>
-        <InputSelect @bind-Value="_formModel.Currency">
-            @foreach (var currency in Enum.GetValues<Currency>())
-            {
-                <option value="@currency">@currency</option>
-            }
-        </InputSelect>
-    </div>
+        <div class="mb-3">
+            <label>Account type</label><br />
+            <InputSelect @bind-Value="_formModel.Type" class="form-select">
+                <option value="">Select account!</option>
+                <option value="@AccountType.Deposit">Basic account</option>
+                <option value="@AccountType.Savings">Savings account</option>
+            </InputSelect>
+        </div>
 
-    <!-- BOX for balance -->
-    <div class="mb-2">
-        <label>Opening balance</label>
-        <InputNumber @bind-Value="_formModel.InitialBalance" />
-    </div>
+        <div class="mb-3">
+            <label>Currency</label><br />
+            <InputSelect @bind-Value="_formModel.Currency" class="form-select">
+                @foreach (var currency in Enum.GetValues<Currency>())
+                {
+                    <option value="@currency">@currency</option>
+                }
+            </InputSelect>
+        </div>
 
-    <!-- Button for create -->
-    <button type="submit">Create</button>
+        <div class="mb-3">
+            <label>Opening balance</label><br />
+            <InputNumber @bind-Value="_formModel.InitialBalance" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-success">Create</button>
+    </div>
 </EditForm>
 
 <!--List of all accounts-->
-<h4>All accounts</h4>
+<hr class="my-5" />
+<h4 class="text-center">All accounts</h4>
 @if (_accounts.Count == 0)
 {
     <p>There are no accounts yet, register your first account!</p>
 }
 else
 {
-    <ul>
+    <div class="row justify-content-center">
         @foreach (var account in _accounts)
         {
-            <li>
-                <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
-                <small>(Uppdaterad @account.LastUpdated.ToLocalTime())</small>
-            </li>
+            <div class="card m-2 shadow-sm" style="width: 20rem;">
+                <div class="card-body">
+                    <h5 class="card-title">@account.Name</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@account.AccountType</h6>
+                    <p class="card-text">
+                        Balance: @($"{account.Balance:N2} {account.Currency}")<br />
+                        <small class="text-muted">Updated @account.LastUpdated.ToLocalTime()</small>
+                    </p>
+                </div>
+            </div>
         }
-    </ul>
+    </div>
 }
 
 <!--Code for the deisgn -->
