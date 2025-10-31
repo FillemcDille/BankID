@@ -1,0 +1,68 @@
+﻿@using BlazorApp4.Services
+@inject PinLockService PinLock
+
+@if (!PinLock.IsUnlocked)
+{
+    <div class="pin-gate d-flex align-items-center justify-content-center">
+        <div class="pin-card card shadow-lg">
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <i class="bi bi-shield-lock-fill text-primary display-5"></i>
+                    <h3 class="mt-2 mb-0">Enter PIN to open the app</h3>
+                </div>
+
+                <div class="input-group input-group-lg mb-2">
+                    <span class="input-group-text">
+                        <i class="bi bi-key-fill"></i>
+                    </span>
+                    <input type="password"
+                           class="form-control text-center"
+                           placeholder="••••"
+                           inputmode="numeric"
+                           pattern="[0-9]*"
+                           autocomplete="one-time-code"
+                           @bind="pinInput" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(feedback))
+                {
+                    <div class="alert alert-danger py-2 mb-3" role="alert">
+                        @feedback
+                    </div>
+                }
+
+                <button class="btn btn-primary w-100 btn-lg" @onclick="Unlock">
+                    <i class="bi bi-unlock-fill me-1"></i> Lås upp
+                </button>
+
+                <div class="text-center mt-3">
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    private string pinInput = "";
+    private string feedback = "";
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private void Unlock()
+    {
+        if (PinLock.TryUnlock(pinInput))
+        {
+            feedback = "Upplåst!";
+            StateHasChanged(); // Tvingar UI att uppdateras
+        }
+        else
+        {
+            feedback = "Fel PIN!";
+        }
+        pinInput = "";
+    }
+}

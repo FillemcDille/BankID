@@ -12,6 +12,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IStorageService, LokalStorageService>();
+builder.Services.AddSingleton<PinLockService>();
 
 // Configure logging for Blazor WebAssembly ".NET8 "
 // The Browser Console provider is enabled by default in WebAssembly.

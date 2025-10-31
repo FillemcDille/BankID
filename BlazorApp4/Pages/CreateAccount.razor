@@ -78,6 +78,7 @@ else
 
 <!--Code for the deisgn -->
 @code {
+
     // Form model class
     public class CreateAccountFormModel
     {
@@ -89,13 +90,20 @@ else
         public decimal InitialBalance { get; set; }
     }
 
-    //Private field for models
+    /// <summary>
+    /// Private List for IBankAccount
+    /// </summary>
     private CreateAccountFormModel _formModel = new();
 
-    //Private List for IBankAccount
+    /// <summary>
+    /// Private List for IBankAccount
+    /// </summary>
     private List<IBankAccount> _accounts = new();
 
-    //Runs when the component loads, fetches all accounts
+    /// <summary>
+    /// Runs when the component loads, fetches all accounts
+    /// </summary>
+    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();
