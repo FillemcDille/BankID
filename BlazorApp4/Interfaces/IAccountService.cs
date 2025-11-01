@@ -14,7 +14,7 @@
         List<IBankAccount> GetAccounts();
         Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
         Task EnsureLoadedAsync();
-        Task WidrawAsync(Guid accountId, decimal amount);
+        Task WithdrawAsync(Guid accountId, decimal amount);
         Task DepositAsync(Guid accountId, decimal amount);
        
     }

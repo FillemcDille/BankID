@@ -146,7 +146,7 @@
         /// balance.</param>
         /// <returns>A task that represents the asynchronous withdrawal operation.</returns>
         /// <exception cref="KeyNotFoundException">Thrown if an account with the specified account ID does not exist.</exception>
-        public async Task WidrawAsync(Guid accountId, decimal amount)
+        public async Task WithdrawAsync(Guid accountId, decimal amount)
         {
             await IsInitialized();
 
