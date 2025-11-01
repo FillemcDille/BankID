@@ -1,6 +1,6 @@
 ﻿namespace BlazorApp4.Domain;
 /// <summary>
-/// Specifies the type of account for banking or financial operations.
+/// Enum for type of account for banking or financial operations.
 /// </summary>
 public enum AccountType
 {
