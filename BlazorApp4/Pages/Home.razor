@@ -3,23 +3,37 @@
 @inject NavigationManager Nav
 
 <PageTitle>Home</PageTitle>
+
+<!---HomePage-->
 <div class="container py-4">
+    <!-- Header with app title and navigation buttons -->
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h1 class="h3 m-0"><i class="bi bi-bank2 me-2"></i>Bankly</h1>
+        <h1 class="h3 m-0">
+            <i class="bi bi-bank2 me-2"></i>Bankly
+        </h1>
+
         <div class="d-flex gap-2">
+            <!-- Create Account button -->
             <button class="btn btn-success" @onclick='() => Nav.NavigateTo("createaccount")'>
                 <i class="bi bi-plus-circle me-1"></i> Create account
             </button>
+
+            <!-- Transfer button -->
             <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("transfer")'>
                 <i class="bi bi-arrow-left-right me-1"></i> Transfer
             </button>
-            <button class="btn btn-outline-secondary"
-                    @onclick='() => Nav.NavigateTo("History", false)'>
+
+            <!-- History button -->
+            <button class="btn btn-outline-secondary" @onclick='() => Nav.NavigateTo("History", false)'>
                 <i class="bi bi-clock-history me-1"></i> History
             </button>
         </div>
     </div>
 
+    @* 
+        If the user has no accounts yet, display an information alert.
+        Otherwise, show account summaries and transaction data.
+    *@
     @if (_accounts.Count == 0)
     {
         <div class="alert alert-info d-flex align-items-center" role="alert">
@@ -29,7 +43,9 @@
     }
     else
     {
+        <!-- Dashboard summary section -->
         <div class="row g-3 mb-4">
+            <!-- Total balance card -->
             <div class="col-12 col-md-4">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -39,10 +55,13 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Recent transactions card -->
             <div class="col-12 col-md-8">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="text-muted mb-2">Recent activity</div>
+
                         @if (_recent.Count == 0)
                         {
                             <div class="text-muted">No transactions yet.</div>
@@ -63,7 +82,10 @@
                                         @foreach (var item in _recent)
                                         {
                                             <tr>
+                                                <!-- Transaction date -->
                                                 <td>@item.t.TimeStamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+
+                                                <!-- Transaction type with colored badge -->
                                                 <td>
                                                     @switch (item.t.TransactionType)
                                                     {
@@ -81,6 +103,8 @@
                                                             break;
                                                     }
                                                 </td>
+
+                                                <!-- Amount and account name -->
                                                 <td class="text-end">@($"{item.t.Amount:N2} SEK")</td>
                                                 <td>@item.account.Name</td>
                                             </tr>
@@ -94,6 +118,7 @@
             </div>
         </div>
 
+        <!-- Account list section -->
         <div class="card shadow-sm">
             <div class="card-header bg-light">
                 <strong>Your accounts</strong>
@@ -105,6 +130,7 @@
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="card h-100">
                                 <div class="card-body">
+                                    <!-- Account header with name, type, and currency -->
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <div class="fw-semibold">@a.Name</div>
@@ -112,8 +138,14 @@
                                         </div>
                                         <span class="badge text-bg-secondary">@a.Currency</span>
                                     </div>
+
+                                    <!-- Account balance -->
                                     <div class="mt-3 h5">@($"{a.Balance:N2} {a.Currency}")</div>
-                                    <small class="text-muted">Updated @a.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small>
+
+                                    <!-- Last updated timestamp -->
+                                    <small class="text-muted">
+                                        Updated @a.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -125,20 +157,29 @@
 </div>
 
 @code {
+    // List of all accounts loaded from the AccountService
     private List<IBankAccount> _accounts = new();
+
+    // The total balance across all accounts
     private decimal _totalBalance;
+
+    // A short list of recent transactions with their corresponding accounts
     private List<(Transaction t, IBankAccount account)> _recent = new();
 
     /// <summary>
-    /// 
+    /// Initializes the component by loading account data and computing totals.
+    /// This method runs when the component is first rendered.
     /// </summary>
-    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
+        // Ensure that account data is loaded from the service
         await AccountService.EnsureLoadedAsync();
+
+        // Retrieve all accounts and calculate total balance
         _accounts = AccountService.GetAccounts();
         _totalBalance = _accounts.Sum(a => a.Balance);
 
+        // Gather the five most recent transactions across all accounts
         _recent = _accounts
             .SelectMany(a => a.Transactions.Select(t => (t, a)))
             .OrderByDescending(x => x.t.TimeStamp)

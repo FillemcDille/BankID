@@ -83,6 +83,8 @@ else
     public class CreateAccountFormModel
     {
         [Required(ErrorMessage = "Account name is mandatory")]
+        [RegularExpression("^[a-zA-Z ]+$",
+         ErrorMessage = "Account name can only contain letters and spaces.")]
         public string Name { get; set; } = string.Empty;
         public AccountType Type { get; set; }
         public Currency Currency { get; set; }
