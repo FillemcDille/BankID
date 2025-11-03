@@ -40,6 +40,12 @@ else
         <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Amount)">
             Sort: Amount @(currentKey == SortKey.Amount ? (descending ? "↑" : "↓") : "")
         </button>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Type)">
+            Sort: Type @(currentKey == SortKey.Type ? (descending ? "↑" : "↓") : "")
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Id)">
+            Sort: Id @(currentKey == SortKey.Id ? (descending ? "↑" : "↓") : "")
+        </button>
     </div>
 
     <!-- Display message if no transactions -->
@@ -118,7 +124,9 @@ else
     private enum SortKey
     {
         Date,
-        Amount
+        Amount,
+        Type,
+        Id
     }
 
     /// <summary>
@@ -193,6 +201,14 @@ else
             SortKey.Date => (descending
                 ? sortedList.OrderByDescending(t => t.TimeStamp)
                 : sortedList.OrderBy(t => t.TimeStamp)),
+
+            SortKey.Type => (descending
+             ? sortedList.OrderByDescending(t => t.TransactionType)
+             : sortedList.OrderBy(t => t.TransactionType)),
+
+            SortKey.Id => (descending
+              ? sortedList.OrderByDescending(t => t.FromAccountId)
+              : sortedList.OrderBy(t => t.FromAccountId ?? Guid.Empty)),
 
             _ => sortedList
         };
