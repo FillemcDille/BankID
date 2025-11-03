@@ -79,12 +79,12 @@
         /// <param name="currency">The currency in which the account will operate.</param>
         /// <param name="initialBalance">The initial balance to set for the account. Must be a non-negative value.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the newly created bank account.</returns>
-        public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
+        public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null)
         {
             await IsInitialized();
-            var account = new BankAccount(name, accountType, currency, initialBalance);
+            var account = new BankAccount(name, accountType, currency, initialBalance, interestRate);
             _accounts.Add(account);
-            _logger.LogInformation("Created account {Name} ({Id}) with balance {Balance} {Currency}.", name, account.Id, initialBalance, currency);
+            _logger.LogInformation("Created account {Name} ({Id}) with balance {Balance} {Currency}. Rate={Rate}", name, account.Id, initialBalance, currency, interestRate);
             await SaveAsync();
             return account;
         }
@@ -116,8 +116,7 @@
                 ?? throw new KeyNotFoundException($"Account with ID {toAccountId} not found.");
 
             fromAccount.TransferTo(toAccount, amount);
-            _logger.LogInformation("Transfer {Amount} from {From} to {To}. New balances: from={FromBal}, to={ToBal}.",
-                amount, fromAccountId, toAccountId, fromAccount.Balance, toAccount.Balance);
+            _logger.LogInformation("Transfer {Amount} from {From} to {To}.", amount, fromAccountId, toAccountId);
 
             await SaveAsync();
         }
@@ -154,7 +153,7 @@
                 ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
 
             account.Withdraw(amount);
-            _logger.LogInformation("Withdraw {Amount} from {Account}. New balance {Balance}.", amount, accountId, account.Balance);
+            _logger.LogInformation("Withdraw {Amount} from {Account}.", amount, accountId);
             await SaveAsync();
         }
 
@@ -175,8 +174,31 @@
                 ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
 
             account.Deposit(amount);
-            _logger.LogInformation("Deposit {Amount} to {Account}. New balance {Balance}.", amount, accountId, account.Balance);
+            _logger.LogInformation("Deposit {Amount} to {Account}.", amount, accountId);
             await SaveAsync();
         }
+
+        /// <summary>
+        /// Applies interest to the specified bank account asynchronously.
+        /// </summary>
+        /// <remarks>The interest is calculated based on the account's balance and interest rate, and the
+        /// resulting amount is credited to the account. The operation is logged and persisted. Ensure that the account
+        /// exists and is loaded before calling this method.</remarks>
+        /// <param name="accountId">The unique identifier of the account to which interest will be applied.</param>
+        /// <returns>A task that represents the asynchronous interest application operation. The task result contains the
+        /// amount of money credited as interest.</returns>
+        /// <exception cref="KeyNotFoundException">Thrown if no account with the specified account ID exists.</exception>
+        public async Task<decimal> ApplyInterestAsync(Guid accountId)
+        {
+            await IsInitialized();
+            var account = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == accountId)
+                ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
+            var credited = account.ApplyInterest();
+            _logger.LogInformation("Applied interest to {Account}. Credited={Credited}", accountId, credited);
+            await SaveAsync();
+            return credited;
+        }
+
+      
     }
 }

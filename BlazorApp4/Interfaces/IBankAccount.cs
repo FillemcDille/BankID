@@ -1,11 +1,5 @@
-﻿/// <summary>
-/// Defines the contract for a bank account, including properties for account identification, type, currency, balance,
-/// and transaction history, as well as methods for withdrawing, depositing, and transferring funds.
-/// </summary>
-/// <remarks>Implementations of this interface should ensure that account operations such as withdrawals,
-/// deposits, and transfers update the balance and transaction history appropriately. Thread safety and validation of
-/// input parameters (such as ensuring sufficient funds for withdrawals and transfers) are recommended for robust
-/// implementations.</remarks>
+﻿//Defines the contract for a bank account, including properties for identification, account details, balance, and
+//transaction history, as well as methods for performing withdrawals, deposits, and transfers.
 public interface IBankAccount
 {
     Guid Id { get; }
@@ -14,6 +8,7 @@ public interface IBankAccount
     Currency Currency { get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
+    decimal? InterestRate { get; } // fraction, e.g. 0.01m == 1%
 
     void Withdraw(decimal amount);
     void Deposit(decimal amount);

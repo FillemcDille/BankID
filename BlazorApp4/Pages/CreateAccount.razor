@@ -46,6 +46,16 @@
             <ValidationMessage For="@(() => _formModel.InitialBalance)" />
         </div>
 
+        <!--Interest rate-->
+        @if (_formModel.Type == AccountType.Savings)
+        {
+            <div class="mb-3">
+                <label>Interest rate (%)</label><br />
+                <InputNumber @bind-Value="_formModel.InterestRatePercent" class="form-control" />
+                <ValidationMessage For="@(() => _formModel.InterestRatePercent)" />
+            </div>
+        }
+
         <button type="submit" class="btn btn-success">Create</button>
     </div>
 </EditForm>
@@ -68,6 +78,10 @@ else
                     <h6 class="card-subtitle mb-2 text-muted">@account.AccountType</h6>
                     <p class="card-text">
                         Balance: @($"{account.Balance:N2} {account.Currency}")<br />
+                        @if (account.AccountType == AccountType.Savings && account.InterestRate is { } r)
+                        {
+                            <span>Interest: @((r * 100m).ToString("0.##")) %</span><br />
+                        }
                         <small class="text-muted">Updated @account.LastUpdated.ToLocalTime()</small>
                     </p>
                 </div>
@@ -77,26 +91,26 @@ else
 }
 
 <!--Code for the deisgn -->
-@code {
+    @code {
 
     // Form model class
     public class CreateAccountFormModel
     {
         [Required(ErrorMessage = "Account name is mandatory")]
-        [RegularExpression("^[a-zA-Z ]+$",
-         ErrorMessage = "Account name can only contain letters and spaces.")]
+        [RegularExpression("^[a-zA-Z ]+$", ErrorMessage = "Account name can only contain letters and spaces.")]
         public string Name { get; set; } = string.Empty;
         public AccountType Type { get; set; }
         public Currency Currency { get; set; }
         [Range(0, double.MaxValue, ErrorMessage = "Opening balance cannot be negative.")]
         public decimal InitialBalance { get; set; }
+        [Range(0.01, 100.0, ErrorMessage = "Rate must be between 0.01 and 100.")]
+        public decimal? InterestRatePercent { get; set; }
     }
 
     /// <summary>
     /// Private List for IBankAccount
     /// </summary>
     private CreateAccountFormModel _formModel = new();
-
     /// <summary>
     /// Private List for IBankAccount
     /// </summary>
@@ -120,12 +134,18 @@ else
     {
         try
         {
+            decimal? rateFraction = null;
+            if (_formModel.Type == AccountType.Savings && _formModel.InterestRatePercent is { } p)
+                rateFraction = p / 100m;
+
             var created = await AccountService.CreateAccount(
                 _formModel.Name,
                 _formModel.Type,
                 _formModel.Currency,
-                _formModel.InitialBalance
+                _formModel.InitialBalance,
+                rateFraction
             );
+
             _accounts = AccountService.GetAccounts();
             // Reset form
             _formModel = new CreateAccountFormModel();
