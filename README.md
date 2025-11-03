@@ -2,6 +2,27 @@ This is a small learning project I made to practice Blazor WebAssembly and C#.
 It works like a simple bank where you can create accounts, deposit, withdraw, and transfer money between them.
 All data is saved in the browser using localStorage, so it stays even after refreshing the page.
 
+--Getting Started --
+- Code = 1234
+
+-- Prerequisites--
+- NET 8 SDK
+- Visual Studio 2022 (17.8+) with ASP.NET and web development workload
+- A modern browser (Edge/Chrome/Firefox/Safari)
+
+-- Run with Visual Studio --
+1. Open the solution in Visual Studio.
+2. In Solution Explorer, right-click `BlazorApp4` and choose __Set as Startup Project__.
+3. Build with __Build > Build Solution__ (Ctrl+Shift+B).
+4. Run with __Debug > Start Debugging__ (F5) or __Debug > Start Without Debugging__ (Ctrl+F5).
+5. The browser opens automatically; if not, copy the URL from the Output window.
+
+-- Run with CLI
+- From the repository root:
+- `dotnet restore`
+- `dotnet build`
+- `dotnet run --project BlazorApp4`
+- Open the URL printed in the console.
 -- Tech stack--
 .Net 8
 Blazor WebAssembly(Client side)
@@ -15,12 +36,15 @@ Account name is required
 Opening balance must be > 0
 Curency:SEK
 Account types: Salary or Savings
+
 - Transfer
 Transfer from one account to another (can’t be the same account)
 Amount must be greater than 0 and not more than the source balance
+
 - Withdraw / Deposit
 Amount must be greater than 0
 You can’t withdraw more money than you have
+
 - Transaction history 
 Shows all transactions for each account
 Can sort by date or amount
