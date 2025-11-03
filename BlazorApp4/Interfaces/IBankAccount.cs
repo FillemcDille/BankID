@@ -8,7 +8,7 @@ public interface IBankAccount
     Currency Currency { get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
-    decimal? InterestRate { get; } // fraction, e.g. 0.01m == 1%
+    decimal? InterestRate { get; }
 
     void Withdraw(decimal amount);
     void Deposit(decimal amount);

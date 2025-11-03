@@ -13,7 +13,6 @@
         Task WithdrawAsync(Guid accountId, decimal amount);
         Task DepositAsync(Guid accountId, decimal amount);
         Task<decimal> ApplyInterestAsync(Guid accountId);
-        
-       
+      
     }
 }
