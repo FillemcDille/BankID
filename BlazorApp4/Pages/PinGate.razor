@@ -1,16 +1,22 @@
 ﻿@using BlazorApp4.Services
 @inject PinLockService PinLock
 
+@* 
+    This component acts as a security gate (PIN lock) that prevents access
+    to the rest of the application until the correct PIN has been entered.
+*@
 @if (!PinLock.IsUnlocked)
 {
     <div class="pin-gate d-flex align-items-center justify-content-center">
         <div class="pin-card card shadow-lg">
             <div class="card-body p-4">
+                <!-- Header with lock icon and title -->
                 <div class="text-center mb-3">
                     <i class="bi bi-shield-lock-fill text-primary display-5"></i>
                     <h3 class="mt-2 mb-0">Enter PIN to open the app</h3>
                 </div>
 
+                <!-- PIN input field -->
                 <div class="input-group input-group-lg mb-2">
                     <span class="input-group-text">
                         <i class="bi bi-key-fill"></i>
@@ -24,6 +30,7 @@
                            @bind="pinInput" />
                 </div>
 
+                <!-- Error message displayed when an incorrect PIN is entered -->
                 @if (!string.IsNullOrWhiteSpace(feedback))
                 {
                     <div class="alert alert-danger py-2 mb-3" role="alert">
@@ -31,6 +38,7 @@
                     </div>
                 }
 
+                <!-- Unlock button -->
                 <button class="btn btn-primary w-100 btn-lg" @onclick="Unlock">
                     <i class="bi bi-unlock-fill me-1"></i> Lås upp
                 </button>
@@ -43,26 +51,36 @@
 }
 else
 {
+    <!-- When the app is unlocked, render the actual page content -->
     @ChildContent
 }
 
 @code {
-    private string pinInput = "";
+    // Local state variable
+    private string pinInput = ""; 
     private string feedback = "";
 
+    // Allows the component to wrap and render child content when unlocked
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    /// <summary>
+    /// Attempts to unlock the application using the entered PIN.
+    /// If successful, PinLock.TryUnlock() updates the unlocked state.
+    /// If not, a feedback message is displayed to the user.
+    /// </summary>
     private void Unlock()
     {
         if (PinLock.TryUnlock(pinInput))
         {
             feedback = "Upplåst!";
-            StateHasChanged(); // Tvingar UI att uppdateras
+            StateHasChanged(); //Forces UI refresh after unlocking
         }
         else
         {
-            feedback = "Fel PIN!";
+            feedback = "Wrong Password!";
         }
+
+        // Always clear the input field after submission
         pinInput = "";
     }
 }

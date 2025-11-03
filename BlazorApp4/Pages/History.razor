@@ -101,7 +101,7 @@ else
     }
 }
 
-<!-- ===================== CODE SECTION ===================== -->
+<!------------------- Code section ------------------->
 @code {
 
     // Fields
@@ -154,8 +154,11 @@ else
         }
     }
 
-    // Lifecycle method
-    // Loads accounts when the page initializes
+    /// <summary>
+    /// Lifecycle method
+    /// Loads accounts when the page initializes
+    /// </summary>
+    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();

@@ -1,5 +1,5 @@
 ﻿namespace BlazorApp4.Domain
-{   //Different transactions
+{   //Enum for different transactions
     public enum TransactionType
     {
         Deposit,

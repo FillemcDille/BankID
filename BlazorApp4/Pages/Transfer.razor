@@ -5,7 +5,7 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-6">
-            <!-- TRANSFER SECTION -->
+            <!-- Transfer section -->
             @if (_accounts.Count < 2)
             {
                 <div class="alert alert-warning text-center mt-4">
@@ -33,7 +33,6 @@
                                         <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
                                     }
                                 </InputSelect>
-                                <ValidationMessage For="@(() => _transferModel.FromAccountId)" />
                             </div>
 
                             <!-- To account -->
@@ -50,7 +49,6 @@
                                         <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
                                     }
                                 </InputSelect>
-                                <ValidationMessage For="@(() => _transferModel.ToAccountId)" />
                             </div>
 
                             <!-- Amount -->
@@ -60,7 +58,7 @@
                                 <ValidationMessage For="@(() => _transferModel.Amount)" />
                             </div>
 
-                            <button type="submit" class="btn btn-primary w-100">
+                            <button type="submit" class="btn btn-primary w-100" disabled="@IsTransferInvalid">
                                 <i class="bi bi-arrow-right-circle"></i> Transfer
                             </button>
                         </EditForm>
@@ -73,7 +71,7 @@
                 </div>
             }
 
-            <!-- WITHDRAW SECTION -->
+            <!-- Withdraw section -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-box-arrow-down"></i> Withdraw</h5>
@@ -92,7 +90,6 @@
                                     <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
                                 }
                             </InputSelect>
-                            <ValidationMessage For="@(() => _withdrawModel.AccountId)" />
                         </div>
 
                         <div class="mb-3">
@@ -101,7 +98,7 @@
                             <ValidationMessage For="@(() => _withdrawModel.Amount)" />
                         </div>
 
-                        <button type="submit" class="btn btn-danger w-100">
+                        <button type="submit" class="btn btn-danger w-100" disabled="@IsWithdrawInvalid">
                             <i class="bi bi-arrow-down-circle"></i> Withdraw
                         </button>
                     </EditForm>
@@ -132,7 +129,6 @@
                                     <option value="@account.Id">@account.Name – @($"{account.Balance:N2} {account.Currency}")</option>
                                 }
                             </InputSelect>
-                            <ValidationMessage For="@(() => _depositModel.AccountId)" />
                         </div>
 
                         <div class="mb-3">
@@ -141,7 +137,7 @@
                             <ValidationMessage For="@(() => _depositModel.Amount)" />
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100">
+                        <button type="submit" class="btn btn-success w-100" disabled="@IsDepositInvalid">
                             <i class="bi bi-arrow-up-circle"></i> Deposit
                         </button>
                     </EditForm>
@@ -199,9 +195,9 @@
     private List<IBankAccount> _toAccounts = new();
 
     // Error messages
-    private string _withdrawError = string.Empty;
-    private string _transferError = string.Empty;
-    private string _depositError = string.Empty;
+    // private string _withdrawError = string.Empty;
+    // private string _transferError = string.Empty;
+    // private string _depositError = string.Empty;
 
 
     // Model classes
@@ -209,21 +205,37 @@
     {
         public Guid FromAccountId { get; set; }
         public Guid ToAccountId { get; set; }
+        [System.ComponentModel.DataAnnotations.Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0.")]
         public decimal? Amount { get; set; }
     }
 
     private class WithdrawFormModel
     {
         public Guid AccountId { get; set; }
+        [System.ComponentModel.DataAnnotations.Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0.")]
         public decimal? Amount { get; set; }
     }
 
     private class DepositFormModel
     {
         public Guid AccountId { get; set; }
+        [System.ComponentModel.DataAnnotations.Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0.")]
         public decimal? Amount { get; set; }
 
     }
+
+    private bool IsTransferInvalid =>
+        _transferModel.FromAccountId == Guid.Empty ||
+        _transferModel.ToAccountId == Guid.Empty ||
+        (_transferModel.Amount ?? 0m) <= 0m;
+
+    private bool IsWithdrawInvalid =>
+        _withdrawModel.AccountId == Guid.Empty ||
+        (_withdrawModel.Amount ?? 0m) <= 0m;
+
+    private bool IsDepositInvalid =>
+        _depositModel.AccountId == Guid.Empty ||
+        (_depositModel.Amount ?? 0m) <= 0m;
 
     /// <summary>
     /// Component initializer - loads all acounts
@@ -248,12 +260,11 @@
         Logger.LogInformation("Transfer submit clicked. From={from} To={To} Amount={Amount}",
         _transferModel.FromAccountId, _transferModel.ToAccountId, amount);
 
-
         // Validate basic input
         if (_transferModel.FromAccountId == Guid.Empty ||
             _transferModel.ToAccountId == Guid.Empty || amount <= 0)
         {
-            _transferError = "Select Valid From/To accounts and an amount greater than zero";
+            _transferError = "Select valid From/To accounts and an amount greater than zero.";
             Logger.LogWarning("Invalid transfer input.");
             return;
         }
@@ -278,13 +289,12 @@
         {
             await AccountService.Transfer(_transferModel.FromAccountId, _transferModel.ToAccountId, amount);
             Logger.LogInformation("Transfer completed.");
-
-        }catch(Exception exception)
+        }
+        catch(Exception exception)
         {
             _transferError = exception.Message;
             Logger.LogError(exception, "Transfer failed.");
         }
-        // Execute transfer
     }
 
     /// <summary>
@@ -310,7 +320,7 @@
         }
 
         // Execute withdraw and refresh account list
-        await AccountService.WidrawAsync(_withdrawModel.AccountId, amount);
+        await AccountService.WithdrawAsync(_withdrawModel.AccountId, amount);
         _accounts = AccountService.GetAccounts();
         _withdrawModel.Amount = null;
     }
