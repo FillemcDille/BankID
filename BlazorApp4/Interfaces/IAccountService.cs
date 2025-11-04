@@ -1,8 +1,8 @@
 ﻿namespace BlazorApp4.Interfaces
 {  
     /// <summary>
-    /// Defines operations for managing bank accounts, including account creation, retrieval, fund transfers, and
-    /// ensuring account data is loaded.
+    /// Defines the contract for account-related operations, including creating accounts, managing balances, performing
+    /// transfers, and importing or exporting account data.
     /// </summary>
     public interface IAccountService
     {
@@ -13,6 +13,8 @@
         Task WithdrawAsync(Guid accountId, decimal amount);
         Task DepositAsync(Guid accountId, decimal amount);
         Task<decimal> ApplyInterestAsync(Guid accountId);
-      
+        Task<string> ExportJsonAsync();
+        Task<List<string>?> ImportJsonAsync(string json, bool replace);
+
     }
 }

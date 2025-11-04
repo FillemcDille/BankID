@@ -1,4 +1,7 @@
-﻿namespace BlazorApp4.Services
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace BlazorApp4.Services
 {
     /// <summary>
     /// Provides operations for managing bank accounts, including creation, retrieval, deposit, withdrawal, and transfer
@@ -199,6 +202,85 @@
             return credited;
         }
 
-      
+        /// <summary>
+        /// Provides default options for JSON serialization, including indented formatting, case-insensitive property
+        /// names, and camel case enum string conversion.
+        /// </summary>
+        /// <remarks>These options ensure that serialized JSON output is human-readable and compatible
+        /// with clients expecting camel case enum values and case-insensitive property matching. The settings are
+        /// suitable for most scenarios where consistent and readable JSON is required.</remarks>
+        private static readonly JsonSerializerOptions _jsonOption = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        };
+       
+        /// <summary>
+        /// Asynchronously exports the current account data to a JSON-formatted string.
+        /// </summary>
+        /// <remarks>The returned JSON string reflects the current state of the account collection. Ensure
+        /// that the data is loaded before calling this method to obtain up-to-date results.</remarks>
+        /// <returns>A string containing the serialized account data in JSON format.</returns>
+        public async Task<string> ExportJsonAsync()
+        {
+            await EnsureLoadedAsync();
+            return JsonSerializer.Serialize(_accounts, _jsonOption);
+        }
+
+        /// <summary>
+        /// Imports a collection of bank accounts from a JSON string asynchronously, optionally replacing existing
+        /// accounts.
+        /// </summary>
+        /// <remarks>If the JSON is invalid, empty, or contains no data, the returned list will include
+        /// corresponding error messages. When adding accounts without replacing, only accounts with unique identifiers
+        /// not already present are imported.</remarks>
+        /// <param name="json">A JSON-formatted string representing a list of bank accounts to import. Cannot be null or whitespace.</param>
+        /// <param name="replaceExisting">If <see langword="true"/>, replaces all existing accounts with the imported accounts; otherwise, adds only
+        /// accounts that do not already exist.</param>
+        /// <returns>A list of error messages encountered during the import process. The list will be empty if the import
+        /// succeeds without errors.</returns>
+        public async Task<List<string>?> ImportJsonAsync(string json, bool replaceExisting = false)
+        {
+            var errors = new List<string>();
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                errors.Add("Empty Json");
+                return errors;
+            }
+
+            List<BankAccount>? incoming = null;
+            try
+            {
+                incoming = JsonSerializer.Deserialize<List<BankAccount>>(json, _jsonOption);
+            }
+            catch
+            {
+                errors.Add("Invalid, JSON");
+            }
+
+            if (incoming is null || incoming.Count == 0)
+            {
+                errors.Add("No Data");
+                return errors;
+            }
+            await EnsureLoadedAsync();
+
+            if (replaceExisting)
+            {
+                _accounts.Clear();
+                _accounts.AddRange(incoming);
+            }
+            else
+            {
+                var existing = _accounts.Select(a => a.Id).ToHashSet();
+                foreach (var a in incoming)
+                    if (!existing.Contains(a.Id))
+                        _accounts.Add(a);
+            }
+
+            await SaveAsync();
+            return errors;
+        }
     }
 }

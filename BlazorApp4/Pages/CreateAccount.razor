@@ -46,7 +46,7 @@
             <ValidationMessage For="@(() => _formModel.InitialBalance)" />
         </div>
 
-        <!--Interest rate-->
+        <!-- Show interest rate field only if the selected type is 'Savings' -->
         @if (_formModel.Type == AccountType.Savings)
         {
             <div class="mb-3">
@@ -84,6 +84,7 @@ else
                         }
                         <small class="text-muted">Updated @account.LastUpdated.ToLocalTime()</small>
                     </p>
+                    
                     @if (account.AccountType == AccountType.Savings)
                     {
                         <div class="d-flex align-items-center gap-2 my-1">
@@ -119,11 +120,12 @@ else
     }
 
     /// <summary>
-    /// Private List for IBankAccount
+    /// Model bound to the account creation form
     /// </summary>
     private CreateAccountFormModel _formModel = new();
+
     /// <summary>
-    /// Private List for IBankAccount
+    /// Local cache of all existing accounts retrieved from AccountService
     /// </summary>
     private List<IBankAccount> _accounts = new();
 
@@ -168,6 +170,10 @@ else
         }
     }
 
+    /// <summary>
+    /// Applies interest to a specific savings account and refreshes the UI.
+    /// Triggered by the "Apply interest" button.
+    /// </summary>
     private async Task ApplyInterestAsync(Guid accountId)
     {
         var credited = await AccountService.ApplyInterestAsync(accountId); // credited amount (SEK)

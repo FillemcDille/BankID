@@ -22,7 +22,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IStorageService, LokalStorageService>();
 builder.Services.AddSingleton<PinLockService>();
-
 // --------------------------------------------------------
 // HttpClient Configuration
 // --------------------------------------------------------
