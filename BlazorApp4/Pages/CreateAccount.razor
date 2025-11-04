@@ -84,6 +84,17 @@ else
                         }
                         <small class="text-muted">Updated @account.LastUpdated.ToLocalTime()</small>
                     </p>
+                    @if (account.AccountType == AccountType.Savings)
+                    {
+                        <div class="d-flex align-items-center gap-2 my-1">
+                            <span>Interest: @(account.InterestRate.HasValue ? (account.InterestRate.Value * 100m).ToString("0.##") + " %" : "-")</span>
+                            <button class="btn btn-outline-primary btn-sm"
+                                    @onclick="() => ApplyInterestAsync(account.Id)">
+                                Apply interest
+                            </button>
+                        </div>
+                        <br />
+                    }
                 </div>
             </div>
         }
@@ -155,5 +166,12 @@ else
         {
             Console.Error.WriteLine(ex);
         }
+    }
+
+    private async Task ApplyInterestAsync(Guid accountId)
+    {
+        var credited = await AccountService.ApplyInterestAsync(accountId); // credited amount (SEK)
+        _accounts = AccountService.GetAccounts(); // refresh UI
+        StateHasChanged();
     }
 }

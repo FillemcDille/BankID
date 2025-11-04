@@ -81,6 +81,10 @@ else
                             {
                                 <span class="badge bg-danger">Withdrawal</span>
                             }
+                            else if (transaction.TransactionType == TransactionType.Interest)
+                            {
+                                <span class ="badge bg-info">Interest</span>
+                            }
                             else
                             {
                                 <span class="badge bg-info">Transfer</span>
