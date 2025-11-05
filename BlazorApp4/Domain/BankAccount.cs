@@ -17,7 +17,7 @@ namespace BlazorApp4.Domain
         public Currency Currency { get; private set; }
         public decimal Balance { get; private set; }
         public DateTime LastUpdated { get; private set; }
-        public decimal? InterestRate { get; private set; } // fraction (0.01m = 1%)
+        public decimal? InterestRate { get; private set; }
         public List<Transaction> Transactions => _transactions;
 
         private readonly List<Transaction> _transactions = new();

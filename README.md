@@ -3,7 +3,8 @@ It works like a simple bank where you can create accounts, deposit, withdraw, an
 All data is saved in the browser using localStorage, so it stays even after refreshing the page.
 
 --Getting Started --
-- Code = 1234
+- Default PIN = 1234
+- Change PIN: edit Service/PinlockService.cs => "CorrectPin"
 
 -- Prerequisites--
 - NET 8 SDK
@@ -31,6 +32,13 @@ localStorage for saving data
 Visual Studio
 
 -- Features --
+PIN Lock: Simple Startup Screen that requires a PIN to unlock app
+Savings Interest: When account type = "Sacings", set an interest rate % and click "Apply interest."
+
+-Import/Export JSON:
+Export go to /reserv => click Copy JSON (copies to clipboard).
+Import: paste JSON and click Import (merge) to merge accounts.
+
 - Create account
 Account name is required
 Opening balance must be > 0
@@ -47,21 +55,24 @@ You can’t withdraw more money than you have
 
 - Transaction history 
 Shows all transactions for each account
-Can sort by date or amount
+Can sort by Date, Amount, Type or ID
 Timestamps are saved in UTC and shown in local time
 
 -- Pages --
-Home
-createaccount → Create new account
-Transfer → Transfer money
-history → View account history
+Home => Overall Info
+createaccount => Create new account
+Transfer => Transfer money
+history => View account history
+reserv => Backup & Restore "Import/export JSON"
 
 -- Project structure --
 Domain/ – logic classes like BankAccount and Transaction
 Services/ – services that save and load data
 Interfaces/ – interfaces that define how services should behave
 Pages/ – Blazor pages (Razor components)
-Layout/ – layout and navigation components
+Layout/ – layout and navigation Components
+DI/ Registered in Program.cs "Blazor WASM dependency injection)
+Logging/ ILogger outputs to browser console
 
 -- Validation rules --
 - Create account 
@@ -71,6 +82,13 @@ Opening balance must be ≥ 0
 Amount must be > 0
 Transfer: accounts must be different
 Withdraw: cannot exceed the account balance
+Clear validation messages shown in Ul
+
+-- VG features implemented --
+Interest on savings accounts
+Simple PIN lock
+JSON Import/Export with basic validation
+
 
 -- How data is stored --
 All accounts and transactions are saved as JSON inside your browser’s localStorage
@@ -86,5 +104,4 @@ If icons don’t show up → check that Bootstrap Icons are added in index.html.
 Real user authentication
 Support for multiple languages
 Unit tests for the logic
-Import/export account data
 Toast notifications for success/error messages

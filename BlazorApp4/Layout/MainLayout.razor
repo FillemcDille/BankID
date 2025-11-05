@@ -1,8 +1,8 @@
 ﻿@inherits LayoutComponentBase
-@inject PinLockService PinLock
 @using BlazorApp4.Services
 @using BlazorApp4.Pages
-
+<!-- Layout wraps the full app in PinGate (simple UI lock via PinLockService).
+     Note: This is a UX gate only, not real security. See Services/PinLockService.cs. -->
 <PinGate>
     <div class="page">
         <div class="sidebar">

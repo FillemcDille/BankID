@@ -1,5 +1,9 @@
-﻿//Defines the contract for a bank account, including properties for identification, account details, balance, and
-//transaction history, as well as methods for performing withdrawals, deposits, and transfers.
+﻿/// <summary>
+///Defines the contract for a bank account.
+/// Provides identification and financial details, including balance, currency, and interest rate.
+/// Includes methods to perform common banking operations such as withdraw, deposit, and transfer,
+/// and exposes a transaction history.
+/// </summary>
 public interface IBankAccount
 {
     Guid Id { get; }
