@@ -56,6 +56,24 @@ namespace BlazorApp4.Services
                 _logger.LogInformation("No accounts found in storage.");
             }
 
+            var now = DateTime.UtcNow;
+            var anyApplied = false;
+            foreach(var a in _accounts.OfType<BankAccount>())
+            {
+                if (a.AccountType != AccountType.Savings || !(a.InterestRate is > 0m))
+                    continue;
+                var everyFive = (int)((now - a.LastUpdated).TotalMinutes / 5);
+                for(int i = 0; i < everyFive; i++)
+                {
+                    var credited = a.ApplyInterest();
+                    if (credited > 0m) anyApplied = true;
+                }
+            }
+            if (anyApplied)
+            {
+                await SaveAsync();
+            }
+             
             isLoaded = true;
         }
 
@@ -172,7 +190,6 @@ namespace BlazorApp4.Services
         public async Task DepositAsync(Guid accountId, decimal amount)
         {
             await IsInitialized();
-
             var account = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == accountId)
                 ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
 

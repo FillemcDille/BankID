@@ -5,7 +5,7 @@
 <h3>Reserv Data</h3>
 
 <!-- Button to export data as JSON and copy it to the clipboard -->
-<button class="btn btn-primary" @onclick="Export">Kopiera JSON</button>
+<button class="btn btn-primary" @onclick="Export">Copy JSON</button>
 
 <div class="mt-4">
 	<label>Copy past JSON here for import</label>
@@ -31,9 +31,7 @@
 	<div class="alert alert-success mt-3">Import klar!</div>
 }
 
-
 @code {
-
 	//Holds the JSON string pasted by the user
 	private string Json = "";
 
