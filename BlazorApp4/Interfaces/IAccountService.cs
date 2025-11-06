@@ -6,8 +6,8 @@
     /// </summary>
     public interface IAccountService
     {
-        Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null);
-        List<IBankAccount> GetAccounts();
+        Task<BankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null);
+        IReadOnlyList<BankAccount> GetAccounts();
         Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
         Task EnsureLoadedAsync();
         Task WithdrawAsync(Guid accountId, decimal amount);
@@ -15,6 +15,10 @@
         Task<decimal> ApplyInterestAsync(Guid accountId);
         Task<string> ExportJsonAsync();
         Task<List<string>?> ImportJsonAsync(string json, bool replace);
+        
+        event Action? StatehasChanged;
+
+        void AutoApplyInterest();
 
     }
 }

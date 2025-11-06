@@ -191,8 +191,8 @@
     private readonly DepositFormModel _depositModel = new();
 
     // List of all accounts (and target accounts for transfer)
-    private List<IBankAccount> _accounts = new();
-    private List<IBankAccount> _toAccounts = new();
+    private List<BankAccount> _accounts = new();
+    private List<BankAccount> _toAccounts = new();
 
     // Error messages
     private string _withdrawError = string.Empty;
@@ -249,7 +249,7 @@
     {
         // Load all accounts when the component initializes
         await AccountService.EnsureLoadedAsync();
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _toAccounts = _accounts;
     }
 
@@ -326,7 +326,7 @@
 
         // Execute withdraw and refresh account list
         await AccountService.WithdrawAsync(_withdrawModel.AccountId, amount);
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _withdrawModel.Amount = null;
     }
 
@@ -347,7 +347,7 @@
 
         // Execute deposit and refresh account list
         await AccountService.DepositAsync(_depositModel.AccountId, amount);
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _depositModel.Amount = null;
     }
 

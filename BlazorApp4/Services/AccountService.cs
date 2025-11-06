@@ -1,24 +1,34 @@
-﻿using System.Text.Json;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace BlazorApp4.Services
 {
     /// <summary>
-    /// Provides operations for managing bank accounts, including creation, retrieval, deposit, withdrawal, and transfer
-    /// of funds. Supports asynchronous persistence and retrieval of account data from storage.
+    /// Provides services for managing bank accounts, including creation, retrieval, transactions, interest application,
+    /// and import/export operations. Supports asynchronous persistence and event notification for account state
+    /// changes.
     /// </summary>
-    /// <remarks>This service coordinates account-related actions and ensures that all changes are logged and
-    /// persisted using the underlying storage and logging services. All account operations are performed asynchronously
-    /// to avoid blocking the calling thread. Before performing account operations, ensure that the service is loaded by
-    /// calling <see cref="EnsureLoadedAsync"/> if necessary. The service is not thread-safe; concurrent access should
-    /// be managed externally if required.</remarks>
-    public class AccountService : IAccountService
+    /// <remarks>AccountService coordinates account data storage, logging, and business operations such as
+    /// transfers, deposits, withdrawals, and interest accrual. It ensures that account data is loaded from persistent
+    /// storage before operations are performed and provides methods for importing and exporting account data in JSON
+    /// format. The service raises events to notify listeners of state changes and supports background interest
+    /// application. This class is not thread-safe; concurrent access should be externally synchronized if used in
+    /// multi-threaded scenarios.</remarks>
+    public class AccountService : IAccountService, IDisposable
     {
+
         private const string StorageKey = "bankapp.accounts";
-        private readonly List<IBankAccount> _accounts;
+        private readonly List<BankAccount> _accounts;
         private readonly IStorageService _storageService;
         private readonly ILogger<AccountService> _logger;
         private bool isLoaded;
+        private bool isRunning;
+        
+        public event Action? action;
+        public event Action? StatehasChanged;
+
+        public void NotifyEvent() => action?.Invoke();
 
         /// <summary>
         /// Initializes a new instance of the AccountService class with the specified storage service and logger.
@@ -30,7 +40,7 @@ namespace BlazorApp4.Services
         {
             _storageService = storageService;
             _logger = logger;
-            _accounts = new List<IBankAccount>();
+            _accounts = new List<BankAccount>();
         }
 
         /// <summary>
@@ -59,25 +69,32 @@ namespace BlazorApp4.Services
                 _logger.LogInformation("No accounts found in storage.");
             }
 
-            var now = DateTime.UtcNow;
-            var anyApplied = false;
-            foreach(var a in _accounts.OfType<BankAccount>())
-            {
-                if (a.AccountType != AccountType.Savings || !(a.InterestRate is > 0m))
-                    continue;
-                var everyFive = (int)((now - a.LastUpdated).TotalMinutes / 5);
-                for(int i = 0; i < everyFive; i++)
-                {
-                    var credited = a.ApplyInterest();
-                    if (credited > 0m) anyApplied = true;
-                }
-            }
-            if (anyApplied)
-            {
-                await SaveAsync();
-            }
-             
             isLoaded = true;
+            NotifyEvent();
+        }
+
+        /// <summary>
+        /// Applies accrued interest to all eligible savings accounts and persists changes if any interest is credited.
+        /// </summary>
+        /// <remarks>Interest is applied only to accounts of type Savings with a positive interest rate.
+        /// Changes are saved only if at least one account receives credited interest.</remarks>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        private async Task AppliedInterest()
+        {
+            var anyApplied = false;
+
+            foreach (var account in _accounts.OfType<BankAccount>())
+            {
+                if (account.AccountType != AccountType.Savings || account.InterestRate is not > 0m)
+                    continue;
+
+                var credited = account.ApplyInterest();
+                if (credited > 0m)
+                    anyApplied = true;
+            }
+
+            if (anyApplied)
+                await SaveAsync();
         }
 
         /// <summary>
@@ -103,7 +120,7 @@ namespace BlazorApp4.Services
         /// <param name="currency">The currency in which the account will operate.</param>
         /// <param name="initialBalance">The initial balance to set for the account. Must be a non-negative value.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the newly created bank account.</returns>
-        public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null)
+        public async Task<BankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null)
         {
             await IsInitialized();
             var account = new BankAccount(name, accountType, currency, initialBalance, interestRate);
@@ -116,9 +133,9 @@ namespace BlazorApp4.Services
         /// <summary>
         /// Retrieves a list of all bank accounts managed by this instance. 
         /// </summary>
-        /// <returns>A list of objects implementing <see cref="IBankAccount"/> representing all accounts. The list will be empty
+        /// <returns>A list of objects implementing <see cref="BankAccount"/> representing all accounts. The list will be empty
         /// if no accounts are available.</returns>
-        public List<IBankAccount> GetAccounts() => _accounts.Cast<IBankAccount>().ToList();
+        public IReadOnlyList<BankAccount> GetAccounts() => _accounts;
 
         /// <summary>
         /// Transfers the specified amount from one bank account to another.
@@ -220,6 +237,7 @@ namespace BlazorApp4.Services
             _logger.LogInformation("Applied interest to {Account}. Credited={Credited}", accountId, credited);
             await SaveAsync();
             return credited;
+            
         }
 
         /// <summary>
@@ -301,6 +319,32 @@ namespace BlazorApp4.Services
 
             await SaveAsync();
             return errors;
+        }
+
+        public void Dispose()
+        {
+            
+        }
+        
+        /// <summary>
+        /// Starts a background process that periodically applies interest and notifies listeners of state changes.
+        /// </summary>
+        /// <remarks>This method initiates an asynchronous loop that applies interest at regular
+        /// intervals. The process continues to run until explicitly stopped. This method is not thread-safe; ensure
+        /// that it is not called concurrently from multiple threads.</remarks>
+        public void AutoApplyInterest()
+        {
+            isRunning = true;
+            
+            Task.Run(async () => { 
+            
+                while(isRunning)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await AppliedInterest();
+                    StatehasChanged?.Invoke();
+                }
+            });
         }
     }
 }
