@@ -34,10 +34,13 @@ namespace BlazorApp4.Services
         }
 
         /// <summary>
-        /// Ensures that the account data is loaded from persistent storage if it has not already been initialized.
+        /// Initializes the account collection by loading data from persistent storage if it has not already been
+        /// loaded.
         /// </summary>
-        /// <remarks>Subsequent calls have no effect if the data has already been loaded. This method
-        /// should be called before accessing account data to ensure it is available.</remarks>
+        /// <remarks>This method should be called before performing operations that require the account
+        /// data to be loaded. If the data is already loaded, the method completes immediately. Interest is
+        /// automatically applied to eligible savings accounts based on the elapsed time since the last update, and
+        /// changes are saved if any interest is credited.</remarks>
         /// <returns>A task that represents the asynchronous initialization operation.</returns>
         private async Task IsInitialized()
         {
