@@ -6,7 +6,6 @@ public enum AccountType
     Deposit
 }
 
-
 //Enum for currency value
 public enum Currency
 {
