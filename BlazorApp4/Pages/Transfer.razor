@@ -110,7 +110,7 @@
                 </div>
             </div>
 
-            <!-- DEPOSIT SECTION -->
+            <!--Deposit section -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="bi bi-box-arrow-in-up"></i> Deposit</h5>
@@ -191,16 +191,16 @@
     private readonly DepositFormModel _depositModel = new();
 
     // List of all accounts (and target accounts for transfer)
-    private List<IBankAccount> _accounts = new();
-    private List<IBankAccount> _toAccounts = new();
+    private List<BankAccount> _accounts = new();
+    private List<BankAccount> _toAccounts = new();
 
     // Error messages
-    // private string _withdrawError = string.Empty;
-    // private string _transferError = string.Empty;
-    // private string _depositError = string.Empty;
+    private string _withdrawError = string.Empty;
+    private string _transferError = string.Empty;
+    private string _depositError = string.Empty;
 
 
-    // Model classes
+    // Represent the data model for transfer form submission
     private class TransferFormModel
     {
         public Guid FromAccountId { get; set; }
@@ -209,6 +209,7 @@
         public decimal? Amount { get; set; }
     }
 
+    // Represent the data model for transfer form withdraw form
     private class WithdrawFormModel
     {
         public Guid AccountId { get; set; }
@@ -216,6 +217,7 @@
         public decimal? Amount { get; set; }
     }
 
+    // Represent the data model for transfer form deposit form
     private class DepositFormModel
     {
         public Guid AccountId { get; set; }
@@ -224,15 +226,18 @@
 
     }
 
+    //Determines if the transfer form is valid before submission
     private bool IsTransferInvalid =>
         _transferModel.FromAccountId == Guid.Empty ||
         _transferModel.ToAccountId == Guid.Empty ||
         (_transferModel.Amount ?? 0m) <= 0m;
-
+        
+    //Determines if the withdraw form is valid before submission
     private bool IsWithdrawInvalid =>
         _withdrawModel.AccountId == Guid.Empty ||
         (_withdrawModel.Amount ?? 0m) <= 0m;
 
+    //Determines if the deposit form is valid before submission
     private bool IsDepositInvalid =>
         _depositModel.AccountId == Guid.Empty ||
         (_depositModel.Amount ?? 0m) <= 0m;
@@ -242,9 +247,8 @@
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        // Load all accounts when the component initializes
         await AccountService.EnsureLoadedAsync();
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _toAccounts = _accounts;
     }
 
@@ -298,7 +302,7 @@
     }
 
     /// <summary>
-    /// Widraw logic
+    /// Withdraw logic. Refreshes account list on success for updated balance.
     /// </summary>
     private async Task OnWithdrawAsync()
     {
@@ -321,12 +325,12 @@
 
         // Execute withdraw and refresh account list
         await AccountService.WithdrawAsync(_withdrawModel.AccountId, amount);
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _withdrawModel.Amount = null;
     }
 
     /// <summary>
-    /// Deposit Logic
+    /// Deposit logic. Refreshes account list on success.
     /// </summary>
     private async Task OnDepositAsync()
     {
@@ -342,7 +346,7 @@
 
         // Execute deposit and refresh account list
         await AccountService.DepositAsync(_depositModel.AccountId, amount);
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _depositModel.Amount = null;
     }
 
@@ -356,6 +360,10 @@
             OnFormChanged(id);
     }
 
+    /// <summary>
+    /// Updates the target account list dynamically when the 'From account' selection changes.
+    /// </summary>
+    /// <param name="fromId">The ID of the selected source account.</param>
     private void OnFormChanged(Guid fromId)
     {
         // Update list of target accounts (exclude selected "from" account)

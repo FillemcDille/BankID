@@ -1,9 +1,14 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Text.Json.Serialization;
 namespace BlazorApp4.Domain
 {
     /// <summary>
-    /// Represents a bank account that supports deposits, withdrawals, transfers, and transaction history.
+    /// Represents a bank account with support for deposits, withdrawals, transfers, and interest application.
     /// </summary>
+    /// <remarks>A BankAccount maintains its balance, transaction history, and account metadata such as type
+    /// and currency. For savings accounts, interest can be applied using the stored interest rate. All monetary
+    /// operations update the account's balance and transaction history. Thread safety is not guaranteed; concurrent
+    /// access should be managed externally if required.</remarks>
     public class BankAccount : IBankAccount
     {
         // Properties
@@ -13,22 +18,24 @@ namespace BlazorApp4.Domain
         public Currency Currency { get; private set; }
         public decimal Balance { get; private set; }
         public DateTime LastUpdated { get; private set; }
+        public decimal? InterestRate { get; private set; }
         public List<Transaction> Transactions => _transactions;
 
         private readonly List<Transaction> _transactions = new();
 
         // Constructors
-        public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
+        public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null)
         {
             Name = name;
             AccountType = accountType;
             Currency = currency;
             Balance = initialBalance;
+            InterestRate = accountType == AccountType.Savings ? interestRate : null;
             LastUpdated = DateTime.UtcNow;
         }
 
         [JsonConstructor]
-        public BankAccount(Guid id, string name, AccountType accountType, Currency currency, decimal balance, DateTime lastUpdated, List<Transaction>? transactions = null)
+        public BankAccount(Guid id, string name, AccountType accountType, Currency currency, decimal balance, DateTime lastUpdated, List<Transaction>? transactions = null, decimal? interestRate = null)
         {
             Id = id;
             Name = name;
@@ -36,6 +43,7 @@ namespace BlazorApp4.Domain
             Currency = currency;
             Balance = balance;
             LastUpdated = lastUpdated;
+            InterestRate = accountType == AccountType.Savings ? interestRate : null;
             if (transactions != null)
                 _transactions = transactions;
         }
@@ -131,6 +139,33 @@ namespace BlazorApp4.Domain
                 ToAccountId = toAccount.Id,
                 TimeStamp = DateTime.UtcNow
             });
+        }
+
+        /// <summary>
+        /// Applies interest using stored InterestRate for savings accounts.
+        /// </summary>
+        /// <returns>The credited interest amount.</returns>
+        public decimal ApplyInterest()
+        {
+            if (AccountType != AccountType.Savings || !(InterestRate is > 0m) || Balance <= 0m)
+                return 0m;
+
+            var interest = Math.Round(Balance * InterestRate!.Value, 2, MidpointRounding.AwayFromZero);
+            if (interest == 0m) return 0m;
+
+            Balance += interest;
+            LastUpdated = DateTime.UtcNow;
+
+            _transactions.Add(new Transaction
+            {
+                TransactionType = TransactionType.Interest,
+                Amount = interest,
+                BalanceAfter = Balance,
+                ToAccountId = Id,
+                TimeStamp = DateTime.UtcNow
+            });
+
+            return interest;
         }
     }
 }

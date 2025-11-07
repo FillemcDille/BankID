@@ -1,0 +1,66 @@
+﻿@page "/reserv"
+@inject IAccountService AccountService
+@inject IJSRuntime JS
+
+<h3>Reserv Data</h3>
+
+<!-- Button to export data as JSON and copy it to the clipboard -->
+<button class="btn btn-primary" @onclick="Export">Copy JSON</button>
+
+<div class="mt-4">
+	<label>Copy past JSON here for import</label>
+	<InputTextArea class="form-control" @bind-Value="Json" rows="10" />
+	<div class="mt-2">
+		<!--<button class="btn btn-success" @onclick="() => Import(true)">Importera (replace all)</button>-->
+		<button class="btn btn-secondary ms-2" @onclick="() => Import(false)">Importera (merga)</button>
+	</div>
+</div>
+
+<!-- Show error messages if the import failed -->
+@if (errors?.Count > 0)
+{
+	<div class="alert alert-danger mt-3">
+		<ul>@foreach (var e in errors) {
+		<li>@e</li>
+	}
+</ul>
+</div>
+}
+@if (ok)
+{
+	<div class="alert alert-success mt-3">Import klar!</div>
+}
+
+@code {
+	//Holds the JSON string pasted by the user
+	private string Json = "";
+
+	//List of error messages returned  from the import if any.
+	private List<string>? errors;
+
+	//Flag indicator whether the import was successful
+	private bool ok;
+
+	/// <summary>
+	/// Exports data from AccountServices as JSON
+	/// and copies it to the user's clipboard via JS interop
+	/// </summary>
+	private async Task Export()
+	{
+		var data = await AccountService.ExportJsonAsync();
+		await JS.InvokeVoidAsync("navigator.clipboard.writeText", data);
+	}
+
+	/// <summary>
+	/// Imports JSON data via AccountSerivce.
+	/// The "replace parameter controls wheter existing data
+	/// should be replaced or merged.
+	/// </summary>
+	/// <param name="replace">true = replace all data, false = merge with existing</parame>
+	private async Task Import(bool replace)
+	{
+		ok = false; errors = null;
+		var res = await AccountService.ImportJsonAsync(Json, replace);
+		if (res != null && res.Count == 0) ok = true; else errors = res;
+	}
+}

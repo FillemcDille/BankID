@@ -158,13 +158,13 @@
 
 @code {
     // List of all accounts loaded from the AccountService
-    private List<IBankAccount> _accounts = new();
+    private List<BankAccount> _accounts = new();
 
     // The total balance across all accounts
     private decimal _totalBalance;
 
     // A short list of recent transactions with their corresponding accounts
-    private List<(Transaction t, IBankAccount account)> _recent = new();
+    private List<(Transaction t, BankAccount account)> _recent = new();
 
     /// <summary>
     /// Initializes the component by loading account data and computing totals.
@@ -176,7 +176,7 @@
         await AccountService.EnsureLoadedAsync();
 
         // Retrieve all accounts and calculate total balance
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
         _totalBalance = _accounts.Sum(a => a.Balance);
 
         // Gather the five most recent transactions across all accounts
