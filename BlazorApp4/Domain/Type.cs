@@ -1,16 +1,12 @@
 ﻿namespace BlazorApp4.Domain;
-/// <summary>
-/// Enum for type of account for banking or financial operations.
-/// </summary>
+//Enum for type of account for banking or financial operations.
 public enum AccountType
 {
     Savings,
     Deposit
 }
 
-/// <summary>
-/// Enum for currency value
-/// </summary>
+//Enum for currency value
 public enum Currency
 {
     SEK,

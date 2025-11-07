@@ -1,21 +1,29 @@
 ﻿namespace BlazorApp4.Interfaces
-{  
+{
     /// <summary>
-    /// Defines operations for managing bank accounts, including account creation, retrieval, fund transfers, and
-    /// ensuring account data is loaded.
+    /// Defines the contract for all bank account operations, including:
+    /// creating and retrieving accounts, managing balances (deposit, withdraw, transfer),
+    /// applying and auto-updating interest for savings accounts,
+    /// and importing/exporting account data in JSON format.
+    /// 
+    /// Implementations are expected to handle persistence and notify UI components
+    /// through the <see cref="StatehasChanged"/> event when data changes.
     /// </summary>
-    /// <remarks>Implementations of this interface provide asynchronous and synchronous methods for
-    /// interacting with bank accounts. Methods may throw exceptions for invalid input or failed operations; refer to
-    /// individual member documentation for details. This interface is intended to be used by services or applications
-    /// that require account management functionality.</remarks>
     public interface IAccountService
     {
-        Task<IBankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance);
-        List<IBankAccount> GetAccounts();
+        Task<BankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, decimal? interestRate = null);
+        IReadOnlyList<BankAccount> GetAccounts();
         Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
         Task EnsureLoadedAsync();
         Task WithdrawAsync(Guid accountId, decimal amount);
         Task DepositAsync(Guid accountId, decimal amount);
-       
+        Task<decimal> ApplyInterestAsync(Guid accountId);
+        Task<string> ExportJsonAsync();
+        Task<List<string>?> ImportJsonAsync(string json, bool replace);
+        
+        event Action? StatehasChanged;
+
+        void AutoApplyInterest();
+
     }
 }

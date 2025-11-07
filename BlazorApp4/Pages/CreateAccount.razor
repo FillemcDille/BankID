@@ -11,15 +11,15 @@
 
         <!--Account name-->
         <div class="mb-3">
-            <label>Account name</label><br />
-            <InputText @bind-Value="_formModel.Name" class="form-control" />
+            <label for=accountName>Account Name</label><br />
+            <InputText id="accountName" @bind-Value="_formModel.Name" class="form-control" autocomplete="name" />
             <ValidationMessage For="@(() => _formModel.Name)" />
         </div>
 
         <!--Account type-->
         <div class="mb-3">
-            <label>Account type</label><br />
-            <InputSelect @bind-Value="_formModel.Type" class="form-select">
+            <label for=accountType>Account Type</label><br />
+            <InputSelect id="accountType" @bind-Value="_formModel.Type" class="form-select">
                 <option value="">Select account!</option>
                 <option value="@AccountType.Deposit">Basic account</option>
                 <option value="@AccountType.Savings">Savings account</option>
@@ -29,8 +29,8 @@
 
         <!--Currency-->
         <div class="mb-3">
-            <label>Currency</label><br />
-            <InputSelect @bind-Value="_formModel.Currency" class="form-select">
+            <label for="currency">Currency</label><br />
+            <InputSelect id="currency" @bind-Value="_formModel.Currency" class="form-select">
                 @foreach (var currency in Enum.GetValues<Currency>())
                 {
                     <option value="@currency">@currency</option>
@@ -41,10 +41,20 @@
 
         <!--Opening balance-->
         <div class="mb-3">
-            <label>Opening balance</label><br />
-            <InputNumber @bind-Value="_formModel.InitialBalance" class="form-control" />
+            <label for="initialBalance">Opening balance</label><br />
+            <InputNumber id="initialBalance" @bind-Value="_formModel.InitialBalance" class="form-control" />
             <ValidationMessage For="@(() => _formModel.InitialBalance)" />
         </div>
+
+        <!-- Show interest rate field only if the selected type is 'Savings' -->
+        @if (_formModel.Type == AccountType.Savings)
+        {
+            <div class="mb-3">
+                <label for="interestRate">Interest rate (%)</label><br />
+                <InputNumber id="interestRate" @bind-Value="_formModel.InterestRatePercent" class="form-control" autocomplete="off" />
+                <ValidationMessage For="@(() => _formModel.InterestRatePercent)" />
+            </div>
+        }
 
         <button type="submit" class="btn btn-success">Create</button>
     </div>
@@ -62,15 +72,40 @@ else
     <div class="row justify-content-center">
         @foreach (var account in _accounts)
         {
+            
+            @if (_isUpdating)
+            {
+                <div class="text-center text-secondary mb-2">
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    Auto-updating balances...
+                </div>
+            }
             <div class="card m-2 shadow-sm" style="width: 20rem;">
                 <div class="card-body">
                     <h5 class="card-title">@account.Name</h5>
                     <h6 class="card-subtitle mb-2 text-muted">@account.AccountType</h6>
                     <p class="card-text">
                         Balance: @($"{account.Balance:N2} {account.Currency}")<br />
+                        @if (account.AccountType == AccountType.Savings && account.InterestRate is { } r)
+                        {
+                            <span>Interest: @((r * 100m).ToString("0.##")) %</span><br />
+                        }
                         <small class="text-muted">Updated @account.LastUpdated.ToLocalTime()</small>
                     </p>
+                    
+                    @if (account.AccountType == AccountType.Savings)
+                    {
+                        <div class="d-flex align-items-center gap-2 my-1">
+                            <span>Interest: @(account.InterestRate.HasValue ? (account.InterestRate.Value * 100m).ToString("0.##") + " %" : "-")</span>
+                            <button class="btn btn-outline-primary btn-sm"
+                                    @onclick="() => ApplyInterestAsync(account.Id)">
+                                Apply interest
+                            </button>
+                        </div>
+                        <br />
+                    }
                 </div>
+                
             </div>
         }
     </div>
@@ -83,24 +118,28 @@ else
     public class CreateAccountFormModel
     {
         [Required(ErrorMessage = "Account name is mandatory")]
-        [RegularExpression("^[a-zA-Z ]+$",
-         ErrorMessage = "Account name can only contain letters and spaces.")]
+        [RegularExpression("^[a-zA-Z ]+$", ErrorMessage = "Account name can only contain letters and spaces.")]
         public string Name { get; set; } = string.Empty;
         public AccountType Type { get; set; }
         public Currency Currency { get; set; }
         [Range(0, double.MaxValue, ErrorMessage = "Opening balance cannot be negative.")]
         public decimal InitialBalance { get; set; }
+        [Range(0.01, 100.0, ErrorMessage = "Rate must be between 0.01 and 100.")]
+        public decimal? InterestRatePercent { get; set; }
     }
 
     /// <summary>
-    /// Private List for IBankAccount
+    /// Model bound to the account creation form
     /// </summary>
     private CreateAccountFormModel _formModel = new();
 
+    private bool _isUpdating = false;
+
+
     /// <summary>
-    /// Private List for IBankAccount
+    /// Local cache of all existing accounts retrieved from AccountService
     /// </summary>
-    private List<IBankAccount> _accounts = new();
+    private List<BankAccount> _accounts = new();
 
     /// <summary>
     /// Runs when the component loads, fetches all accounts
@@ -109,8 +148,26 @@ else
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();
-        _accounts =  AccountService.GetAccounts();
+        _accounts =  AccountService.GetAccounts().ToList();
+
+        AccountService.StatehasChanged += StateChanged;
+        AccountService.AutoApplyInterest();
     }
+    public void StateChanged()
+    {
+        InvokeAsync(async () =>
+    {
+        _isUpdating = true;
+        StateHasChanged();
+
+        await Task.Delay(1000);
+
+        _accounts = AccountService.GetAccounts().ToList();
+        _isUpdating = false;
+        StateHasChanged();
+    });
+    }
+
 
     /// <summary>
     /// Method that runs when the form is valid and submitted
@@ -120,13 +177,19 @@ else
     {
         try
         {
+            decimal? rateFraction = null;
+            if (_formModel.Type == AccountType.Savings && _formModel.InterestRatePercent is { } p)
+                rateFraction = p / 100m;
+
             var created = await AccountService.CreateAccount(
                 _formModel.Name,
                 _formModel.Type,
                 _formModel.Currency,
-                _formModel.InitialBalance
+                _formModel.InitialBalance,
+                rateFraction
             );
-            _accounts = AccountService.GetAccounts();
+
+            _accounts = AccountService.GetAccounts().ToList();
             // Reset form
             _formModel = new CreateAccountFormModel();
             StateHasChanged();
@@ -135,5 +198,16 @@ else
         {
             Console.Error.WriteLine(ex);
         }
+    }
+
+    /// <summary>
+    /// Applies interest to a specific savings account and refreshes the UI.
+    /// Triggered by the "Apply interest" button.
+    /// </summary>
+    private async Task ApplyInterestAsync(Guid accountId)
+    {
+        var credited = await AccountService.ApplyInterestAsync(accountId); // credited amount (SEK)
+        _accounts = AccountService.GetAccounts().ToList(); // refresh UI
+        StateHasChanged();
     }
 }

@@ -1,7 +1,6 @@
 ﻿@page "/History"
 @inject IAccountService AccountService
 
-<!-- ===================== HISTORY PAGE ===================== -->
 <h3 class="text-center mt-4 mb-3">
     <i class="bi bi-clock-history"></i> Transaction History
 </h3>
@@ -22,27 +21,35 @@ else
                       class="form-select"
                       id="accountSelect"
                       @bind-Value="SelectedAccountId">
+                      <option value= "@Guid.Empty">All Accounts</option>
              @foreach (var account in _accounts)
              {   
-                 <option value="@account.Id">@account.Name - Balance: @($"{account.Balance:N2} SEK")</option>
+                 <option value="@account.Id">@account.Name - Balance: @($"{account.Balance:N2} SEK") - Interest: @($"{account.InterestRate:P}")</option>
              }
          </InputSelect>
      </div>
 
     </div>
+
     <!-- Sorting controls for transactions -->
     <div class="mt-3 mt-md-0">
-        <label class="form-label">Sort by</label><br />
+        <label class="form-label"></label><br />
         <button class="btn btn-outline-secondary btn-sm me-1" @onclick="() => SetSort(SortKey.Date)">
             Sort: Date @(currentKey == SortKey.Date ? (descending ? "↑" : "↓") : "")
         </button>
         <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Amount)">
             Sort: Amount @(currentKey == SortKey.Amount ? (descending ? "↑" : "↓") : "")
         </button>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Type)">
+            Sort: Type @(currentKey == SortKey.Type ? (descending ? "↑" : "↓") : "")
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="() => SetSort(SortKey.Id)">
+            Sort: Id @(currentKey == SortKey.Id ? (descending ? "↑" : "↓") : "")
+        </button>
     </div>
 
     <!-- Display message if no transactions -->
-    @if (_selectedAccount == null)
+    @if (!sortTransaction().Any())
     {
         <p>No transactions yet!</p>
     }
@@ -57,6 +64,7 @@ else
                     <th>Transaction type</th>
                     <th>Balance after</th>
                     <th>From → To</th>
+                    <th>Account</th>
                 </tr>
             </thead>
             <tbody>
@@ -73,6 +81,10 @@ else
                             else if (transaction.TransactionType == TransactionType.Withdraw)
                             {
                                 <span class="badge bg-danger">Withdrawal</span>
+                            }
+                            else if (transaction.TransactionType == TransactionType.Interest)
+                            {
+                                <span class ="badge bg-warning">Interest</span>
                             }
                             else
                             {
@@ -94,6 +106,9 @@ else
                                 </span>
                             }
                         </td>
+                        <td>
+                            @_accounts.FirstOrDefault(a => a.Transactions.Contains(transaction))?.Name
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -105,8 +120,8 @@ else
 @code {
 
     // Fields
-    private List<IBankAccount> _accounts = new();
-    private IBankAccount? _selectedAccount;
+    private List<BankAccount> _accounts = new();
+    private BankAccount? _selectedAccount;
     private Guid _selectedAccountId;
 
     // Sorting
@@ -117,7 +132,9 @@ else
     private enum SortKey
     {
         Date,
-        Amount
+        Amount,
+        Type,
+        Id
     }
 
     /// <summary>
@@ -162,41 +179,47 @@ else
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();
-        _accounts = AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts().ToList();
 
         // If there are accounts, select the first one by default
         if (_accounts.Count > 0)
         {
-            _selectedAccountId = _accounts[0].Id;
-            _selectedAccount = _accounts[0];
+            _selectedAccountId = Guid.Empty;
+            _selectedAccount = null;
         }
     }
 
     /// <summary>
-    /// Returns the transaction list sorted by the aktive key.
+    /// Returns a sorted list of transactions based on the current sort key and selection.
+    /// If "All Accounts" is selected, merges transactions from all accounts.
     /// </summary>
     private IEnumerable<Transaction> sortTransaction()
     {
-        if (_selectedAccount == null)
-            return Enumerable.Empty<Transaction>();
-
-        // Get transactions and apply sorting based on current key and direction
-        var sortedList = _selectedAccount.Transactions.AsEnumerable();
-
-        sortedList = currentKey switch
+        
+        IEnumerable<Transaction> transactions = SelectedAccountId == Guid.Empty
+        ? _accounts.SelectMany(a => a.Transactions)
+        : _selectedAccount?.Transactions ?? Enumerable.Empty<Transaction>();
+      
+        return currentKey switch
         {
             SortKey.Amount => (descending
-                ? sortedList.OrderByDescending(t => t.Amount)
-                : sortedList.OrderBy(t => t.Amount)),
+                ? transactions.OrderByDescending(t => t.Amount)
+                : transactions.OrderBy(t => t.Amount)),
 
             SortKey.Date => (descending
-                ? sortedList.OrderByDescending(t => t.TimeStamp)
-                : sortedList.OrderBy(t => t.TimeStamp)),
+                ? transactions.OrderByDescending(t => t.TimeStamp)
+                : transactions.OrderBy(t => t.TimeStamp)),
 
-            _ => sortedList
+            SortKey.Type => (descending
+             ? transactions.OrderByDescending(t => t.TransactionType)
+             : transactions.OrderBy(t => t.TransactionType)),
+
+            SortKey.Id => (descending
+              ? transactions.OrderByDescending(t => t.FromAccountId)
+              : transactions.OrderBy(t => t.FromAccountId ?? Guid.Empty)),
+
+            _ => transactions
         };
-
-        return sortedList;
     }
 }
 
