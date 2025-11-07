@@ -247,7 +247,6 @@
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        // Load all accounts when the component initializes
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts().ToList();
         _toAccounts = _accounts;
@@ -303,7 +302,7 @@
     }
 
     /// <summary>
-    /// Widraw logic
+    /// Withdraw logic. Refreshes account list on success for updated balance.
     /// </summary>
     private async Task OnWithdrawAsync()
     {
@@ -331,7 +330,7 @@
     }
 
     /// <summary>
-    /// Deposit Logic
+    /// Deposit logic. Refreshes account list on success.
     /// </summary>
     private async Task OnDepositAsync()
     {

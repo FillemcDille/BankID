@@ -30,6 +30,7 @@ Blazor WebAssembly(Client side)
 C#
 localStorage for saving data
 Visual Studio
+Blazor WebAssembly was chosen to demonstrate modern client-side C# development, enabling a full single-page application without a backend server.”
 
 -- Features --
 PIN Lock: Simple Startup Screen that requires a PIN to unlock app
@@ -88,7 +89,6 @@ Clear validation messages shown in Ul
 Interest on savings accounts
 Simple PIN lock
 JSON Import/Export with basic validation
-
 
 -- How data is stored --
 All accounts and transactions are saved as JSON inside your browser’s localStorage

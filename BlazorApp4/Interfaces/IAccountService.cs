@@ -1,8 +1,13 @@
 ﻿namespace BlazorApp4.Interfaces
-{  
+{
     /// <summary>
-    /// Defines the contract for account-related operations, including creating accounts, managing balances, performing
-    /// transfers, and importing or exporting account data.
+    /// Defines the contract for all bank account operations, including:
+    /// creating and retrieving accounts, managing balances (deposit, withdraw, transfer),
+    /// applying and auto-updating interest for savings accounts,
+    /// and importing/exporting account data in JSON format.
+    /// 
+    /// Implementations are expected to handle persistence and notify UI components
+    /// through the <see cref="StatehasChanged"/> event when data changes.
     /// </summary>
     public interface IAccountService
     {

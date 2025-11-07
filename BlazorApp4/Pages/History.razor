@@ -1,7 +1,6 @@
 ﻿@page "/History"
 @inject IAccountService AccountService
 
-<!-- ===================== HISTORY PAGE ===================== -->
 <h3 class="text-center mt-4 mb-3">
     <i class="bi bi-clock-history"></i> Transaction History
 </h3>
@@ -191,20 +190,16 @@ else
     }
 
     /// <summary>
-    /// Returns the transaction list sorted by the aktive key.
+    /// Returns a sorted list of transactions based on the current sort key and selection.
+    /// If "All Accounts" is selected, merges transactions from all accounts.
     /// </summary>
     private IEnumerable<Transaction> sortTransaction()
     {
         
-
-     
         IEnumerable<Transaction> transactions = SelectedAccountId == Guid.Empty
         ? _accounts.SelectMany(a => a.Transactions)
         : _selectedAccount?.Transactions ?? Enumerable.Empty<Transaction>();
-
-
       
-
         return currentKey switch
         {
             SortKey.Amount => (descending

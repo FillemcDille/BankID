@@ -321,11 +321,14 @@ namespace BlazorApp4.Services
             return errors;
         }
 
+        /// <summary>
+        /// Releases resources used by the service. Currently a placeholder for future cleanup logic.
+        /// </summary>
         public void Dispose()
         {
-            
+            // TODO: Add cleanup logic if background tasks or unmanaged resources are introduced.
         }
-        
+
         /// <summary>
         /// Starts a background process that periodically applies interest and notifies listeners of state changes.
         /// </summary>
